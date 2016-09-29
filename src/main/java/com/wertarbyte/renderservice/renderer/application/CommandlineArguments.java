@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2013-2016 Wertarbyte <http://wertarbyte.com>
+ *
+ * This file is part of Wertarbyte RenderService.
+ *
+ * Wertarbyte RenderService is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Wertarbyte RenderService is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Wertarbyte RenderService.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.wertarbyte.renderservice.renderer.application;
+
+import com.lexicalscope.jewel.cli.Option;
+
+import java.io.File;
+
+/**
+ * Commandline arguments, parsed by {@link com.lexicalscope.jewel.cli.CliFactory}.
+ */
+public interface CommandlineArguments {
+    @Option(longName = "headless",
+            description = "Run without GUI",
+            defaultValue = "false")
+    boolean getHeadless();
+
+    @Option(shortName = "p",
+            longName = "process-count",
+            description = "Number of renderer processes",
+            defaultValue = "1")
+    int getProcesses();
+
+    @Option(shortName = "t",
+            longName = "thread-count",
+            description = "Number of threads per processes",
+            defaultValue = "2")
+    int getThreads();
+
+    @Option(longName = "chunky-xms",
+            description = "minimum memory for chunky processes, in MB",
+            defaultValue = "1024")
+    int getXms();
+
+    @Option(longName = "chunky-xmx",
+            description = "maximum memory for chunky processes, in MB",
+            defaultValue = "2048")
+    int getXmx();
+
+    @Option(longName = "job-path",
+            description = "path for temporary job data",
+            defaultToNull = true)
+    File getJobPath();
+
+    @Option(longName = "upload-rate",
+            description = "maximum upload rate in KB/s",
+            defaultToNull = true)
+    Integer getMaxUploadRate();
+
+    @Option(longName = "master",
+            description = "address and port of the master server",
+            defaultToNull = true)
+    String getMasterServer();
+}
