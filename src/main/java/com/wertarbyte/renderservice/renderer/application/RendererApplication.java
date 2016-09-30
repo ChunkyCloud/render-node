@@ -21,6 +21,10 @@ package com.wertarbyte.renderservice.renderer.application;
 
 import com.wertarbyte.renderservice.libchunky.ChunkyProcessWrapper;
 import com.wertarbyte.renderservice.renderer.rendering.RenderWorker;
+import com.wertarbyte.renderservice.renderer.util.MinecraftDownloader;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public abstract class RendererApplication {
+    private static final String TEXTURE_VERSION = "1.10";
     private static final Logger LOGGER = LogManager.getLogger(RendererApplication.class);
     private static final String SETTINGS_FILENAME = "serverSettings.yml";
 
@@ -47,6 +52,19 @@ public abstract class RendererApplication {
     public RendererApplication(RendererSettings settings) {
         this.settings = settings;
         //api = new RenderServerApiClient(baseUrl, cacheDirectory, maxCacheSize);
+
+        try (Response response = MinecraftDownloader.downloadMinecraft(TEXTURE_VERSION).get()) {
+            texturepackPath = File.createTempFile("minecraft", ".jar");
+            LOGGER.info("Downloading Minecraft " + TEXTURE_VERSION + " to " + texturepackPath.getAbsolutePath());
+
+            try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
+                sink.writeAll(response.body().source());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Could not download assets", e);
+            System.exit(-1);
+        }
+        LOGGER.info("Finished downloading");
 
         /*
         try {
