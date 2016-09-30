@@ -1,6 +1,5 @@
 package com.wertarbyte.renderservice.renderer.rendering;
 
-import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -21,11 +20,12 @@ import java.util.concurrent.TimeoutException;
  */
 public class RenderWorker extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(RenderWorker.class);
-    private final Gson gson = new Gson();
     private final ExecutorService executorService;
     private final Path jobDirectory;
     private final ChunkyWrapperFactory chunkyFactory;
     private final int poolSize;
+    private final int MAX_RESTART_DELAY_SECONDS = 1800; // 30 minutes
+    private int nextRestartDelaySeconds = 5;
     private ConnectionFactory factory;
     private Connection conn;
     private Channel channel;
@@ -47,13 +47,7 @@ public class RenderWorker extends Thread {
 
             try {
                 connect();
-            } catch (IOException e) {
-                LOGGER.error("Connecting to RabbitMQ failed", e);
-                break;
-            }
-
-            QueueingConsumer consumer = new QueueingConsumer(channel);
-            try {
+                QueueingConsumer consumer = new QueueingConsumer(channel);
                 channel.basicQos(poolSize, false); // only fetch <poolSize> tasks at once
                 channel.basicConsume("rs_tasks", false, consumer);
 
@@ -67,20 +61,23 @@ public class RenderWorker extends Thread {
                         break;
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.error("An error occurred in the worker loop", e);
             }
 
-            try {
-                conn.close(5000);
-            } catch (IOException e) {
-                LOGGER.error("An error occurred while shutting down", e);
+            if (conn != null) {
+                try {
+                    conn.close(5000);
+                } catch (IOException e) {
+                    LOGGER.error("An error occurred while shutting down", e);
+                }
             }
 
             if (!interrupted()) {
-                LOGGER.info("Waiting 5 seconds before restarting...");
+                LOGGER.info("Waiting " + nextRestartDelaySeconds + " seconds before restarting...");
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(nextRestartDelaySeconds * 1000);
+                    nextRestartDelaySeconds = Math.min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds + 10);
                 } catch (InterruptedException e) {
                     LOGGER.warn("Interrupted while sleeping", e);
                 }
