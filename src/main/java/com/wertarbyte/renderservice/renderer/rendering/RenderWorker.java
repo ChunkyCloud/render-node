@@ -42,38 +42,49 @@ public class RenderWorker extends Thread {
 
     @Override
     public void run() {
-        LOGGER.info("Starting a worker with up to " + poolSize + " concurrent render processes");
-
-        try {
-            connect();
-        } catch (IOException e) {
-            LOGGER.error("Connecting to RabbitMQ failed", e);
-            return;
-        }
-
-        QueueingConsumer consumer = new QueueingConsumer(channel);
-        try {
-            channel.basicQos(poolSize, false); // only fetch <poolSize> tasks at once
-            channel.basicConsume("rs_tasks", false, consumer);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred in the worker loop", e);
-        }
-
         while (!interrupted()) {
+            LOGGER.info("Starting, using up to " + poolSize + " concurrent render processes");
+
             try {
-                Path assignmentPath = jobDirectory.resolve(UUID.randomUUID().toString());
-                assignmentPath.toFile().mkdir();
-                executorService.submit(new AssignmentWorker(consumer.nextDelivery(), channel, assignmentPath, chunkyFactory.getChunkyInstance()));
-            } catch (InterruptedException e) {
-                LOGGER.info("Worker loop interrupted", e);
+                connect();
+            } catch (IOException e) {
+                LOGGER.error("Connecting to RabbitMQ failed", e);
                 break;
             }
-        }
 
-        try {
-            conn.close(5000);
-        } catch (IOException e) {
-            LOGGER.error("An error occurred while shutting down the worker", e);
+            QueueingConsumer consumer = new QueueingConsumer(channel);
+            try {
+                channel.basicQos(poolSize, false); // only fetch <poolSize> tasks at once
+                channel.basicConsume("rs_tasks", false, consumer);
+
+                while (!interrupted()) {
+                    try {
+                        Path assignmentPath = jobDirectory.resolve(UUID.randomUUID().toString());
+                        assignmentPath.toFile().mkdir();
+                        executorService.submit(new AssignmentWorker(consumer.nextDelivery(), channel, assignmentPath, chunkyFactory.getChunkyInstance()));
+                    } catch (InterruptedException e) {
+                        LOGGER.info("Worker loop interrupted", e);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("An error occurred in the worker loop", e);
+            }
+
+            try {
+                conn.close(5000);
+            } catch (IOException e) {
+                LOGGER.error("An error occurred while shutting down", e);
+            }
+
+            if (!interrupted()) {
+                LOGGER.info("Waiting 5 seconds before restarting...");
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Interrupted while sleeping", e);
+                }
+            }
         }
     }
 

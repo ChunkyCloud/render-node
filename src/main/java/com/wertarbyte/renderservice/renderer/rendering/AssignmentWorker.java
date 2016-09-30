@@ -48,6 +48,8 @@ public class AssignmentWorker implements Runnable {
                     return;
                 }
 
+                // TODO download foliage, grass and octree
+
                 try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
                     sceneDescription = new SceneDescription(gson.fromJson(reader, JsonObject.class));
                     sceneDescription.setName("scene");
