@@ -80,7 +80,10 @@ public class RenderWorker extends Thread {
                     nextRestartDelaySeconds = Math.min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds + 10);
                 } catch (InterruptedException e) {
                     LOGGER.warn("Interrupted while sleeping", e);
+                    return;
                 }
+            } else {
+                return;
             }
         }
     }

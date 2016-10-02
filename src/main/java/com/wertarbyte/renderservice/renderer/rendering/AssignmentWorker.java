@@ -1,31 +1,36 @@
 package com.wertarbyte.renderservice.renderer.rendering;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import com.wertarbyte.renderservice.libchunky.ChunkyWrapper;
 import com.wertarbyte.renderservice.libchunky.RenderListenerAdapter;
 import com.wertarbyte.renderservice.libchunky.scene.SceneDescription;
-import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
 public class AssignmentWorker implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(AssignmentWorker.class);
     private static final Gson gson = new Gson();
 
+    private final RenderServerApiClient apiClient;
     private final QueueingConsumer.Delivery delivery;
     private final Channel channel;
     private final Path workingDir;
     private final ChunkyWrapper chunky;
 
     public AssignmentWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir, ChunkyWrapper chunky) {
+        this.apiClient = new RenderServerApiClient("http://localhost:3000", new File("/tmp"), 1024 * 1024 * 1024);
         this.delivery = delivery;
         this.channel = channel;
         this.workingDir = workingDir;
@@ -38,32 +43,20 @@ public class AssignmentWorker implements Runnable {
             Assignment assignment = gson.fromJson(new String(delivery.getBody(), "UTF-8"), Assignment.class);
             LOGGER.info(String.format("New assignment: %d spp for job %s", assignment.getSpp(), assignment.getJobId()));
 
-            LOGGER.info("Downloading scene...");
-            SceneDescription sceneDescription;
-            try (Response response = new RenderServerApiClient("http://localhost:3000", new File("/tmp"), 1024 * 1024 * 1024)
-                    .getScene(assignment.getJobId())
-                    .get()) {
-                if (!response.isSuccessful()) {
-                    LOGGER.warn("Downloading the scene failed");
-
-                    try {
-                        channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
-                    } catch (IOException e) {
-                        LOGGER.error("Could not nack a failed task", e);
-                    }
-                    return;
-                }
-
-                // TODO download foliage, grass and octree
-
-                try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
-                    sceneDescription = new SceneDescription(gson.fromJson(reader, JsonObject.class));
-                    sceneDescription.setName("scene");
-                }
-            }
+            final SceneDescription[] sceneDescription = new SceneDescription[1];
+            LOGGER.info("Downloading scene files...");
+            CompletableFuture.allOf(
+                    apiClient.getScene(assignment.getJobId()).thenAccept((scene -> {
+                        scene.setName("scene");
+                        sceneDescription[0] = scene;
+                    })),
+                    apiClient.downloadFoliage(assignment.getJobId(), new File(workingDir.toFile(), "scene.foliage")),
+                    apiClient.downloadGrass(assignment.getJobId(), new File(workingDir.toFile(), "scene.grass")),
+                    apiClient.downloadOctree(assignment.getJobId(), new File(workingDir.toFile(), "scene.octree"))
+            ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
             LOGGER.info("Rendering...");
-            chunky.setScene(sceneDescription);
+            chunky.setScene(sceneDescription[0]);
             chunky.setSceneDirectory(workingDir.toFile());
             chunky.setTargetSpp(assignment.getSpp());
             chunky.addListener(new RenderListenerAdapter() {

@@ -19,14 +19,20 @@
 
 package com.wertarbyte.renderservice.renderer.rendering;
 
-import com.wertarbyte.renderservice.libchunky.ChunkyRenderDump;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.wertarbyte.renderservice.libchunky.scene.SceneDescription;
 import okhttp3.*;
+import okio.BufferedSink;
+import okio.Okio;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.concurrent.CompletableFuture;
-import java.util.zip.GZIPOutputStream;
 
 public class RenderServerApiClient {
+    private static final Gson gson = new Gson();
     private final String baseUrl;
     private final OkHttpClient client;
 
@@ -37,13 +43,11 @@ public class RenderServerApiClient {
                 .build();
     }
 
-    public CompletableFuture<Response> getScene(String jobId) {
-        CompletableFuture<Response> result = new CompletableFuture<>();
+    public CompletableFuture<SceneDescription> getScene(String jobId) {
+        CompletableFuture<SceneDescription> result = new CompletableFuture<>();
 
         client.newCall(new Request.Builder()
-                .url(baseUrl + "/jobs/" + jobId + "/files/scene.json")
-                .get()
-                .build())
+                .url(baseUrl + "/jobs/" + jobId + "/files/scene.json").get().build())
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -51,31 +55,39 @@ public class RenderServerApiClient {
                     }
 
                     @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        result.complete(response);
+                    public void onResponse(Call call, Response response) {
+                        if (response.code() == 200) {
+                            try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                                result.complete(new SceneDescription(gson.fromJson(reader, JsonObject.class)));
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("The scene could not be downloaded"));
+                        }
                     }
                 });
 
         return result;
     }
 
-    public CompletableFuture<Response> sendDump(String jobId, ChunkyRenderDump dump) throws IOException {
-        CompletableFuture<Response> result = new CompletableFuture<>();
+    public CompletableFuture downloadFoliage(String jobId, File file) {
+        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.foliage", file);
+    }
 
-        byte[] dumpFile;
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             DataOutputStream out = new DataOutputStream(new GZIPOutputStream(bos))) {
-            dump.writeDump(out);
-            dumpFile = bos.toByteArray();
-        }
+    public CompletableFuture downloadGrass(String jobId, File file) {
+        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.grass", file);
+    }
+
+    public CompletableFuture downloadOctree(String jobId, File file) {
+        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.octree", file);
+    }
+
+    private CompletableFuture downloadFile(String url, File file) {
+        CompletableFuture<File> result = new CompletableFuture<>();
 
         client.newCall(new Request.Builder()
-                .url(baseUrl + "/jobs/" + jobId)
-                .post(new MultipartBody.Builder()
-                        .setType(MediaType.parse("multipart/form-data"))
-                        .addFormDataPart("dump", "scene.dump", RequestBody.create(MediaType.parse("application/octet-stream"), dumpFile))
-                        .build())
-                .build())
+                .url(url).get().build())
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -83,8 +95,17 @@ public class RenderServerApiClient {
                     }
 
                     @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        result.complete(response);
+                    public void onResponse(Call call, Response response) {
+                        if (response.code() == 200) {
+                            try (BufferedSink sink = Okio.buffer(Okio.sink(file))) {
+                                sink.writeAll(response.body().source());
+                                result.complete(file);
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("Download of " + url + " failed"));
+                        }
                     }
                 });
 
