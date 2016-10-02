@@ -45,6 +45,12 @@ public class AssignmentWorker implements Runnable {
                     .get()) {
                 if (!response.isSuccessful()) {
                     LOGGER.warn("Downloading the scene failed");
+
+                    try {
+                        channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+                    } catch (IOException e) {
+                        LOGGER.error("Could not nack a failed task", e);
+                    }
                     return;
                 }
 
