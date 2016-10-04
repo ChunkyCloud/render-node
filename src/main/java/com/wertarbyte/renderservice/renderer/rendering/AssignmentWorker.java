@@ -42,17 +42,18 @@ public class AssignmentWorker implements Runnable {
         try {
             Assignment assignment = gson.fromJson(new String(delivery.getBody(), "UTF-8"), Assignment.class);
             LOGGER.info(String.format("New assignment: %d spp for job %s", assignment.getSpp(), assignment.getJobId()));
+            Job job = apiClient.getJob(assignment.getJobId()).get(10, TimeUnit.MINUTES);
 
             final SceneDescription[] sceneDescription = new SceneDescription[1];
             LOGGER.info("Downloading scene files...");
             CompletableFuture.allOf(
-                    apiClient.getScene(assignment.getJobId()).thenAccept((scene -> {
+                    apiClient.getScene(job).thenAccept((scene -> {
                         scene.setName("scene");
                         sceneDescription[0] = scene;
                     })),
-                    apiClient.downloadFoliage(assignment.getJobId(), new File(workingDir.toFile(), "scene.foliage")),
-                    apiClient.downloadGrass(assignment.getJobId(), new File(workingDir.toFile(), "scene.grass")),
-                    apiClient.downloadOctree(assignment.getJobId(), new File(workingDir.toFile(), "scene.octree"))
+                    apiClient.downloadFoliage(job, new File(workingDir.toFile(), "scene.foliage")),
+                    apiClient.downloadGrass(job, new File(workingDir.toFile(), "scene.grass")),
+                    apiClient.downloadOctree(job, new File(workingDir.toFile(), "scene.octree"))
             ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
             LOGGER.info("Rendering...");

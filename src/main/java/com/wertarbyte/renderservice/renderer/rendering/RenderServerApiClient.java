@@ -43,11 +43,39 @@ public class RenderServerApiClient {
                 .build();
     }
 
-    public CompletableFuture<SceneDescription> getScene(String jobId) {
+    public CompletableFuture<Job> getJob(String jobId) {
+        CompletableFuture<Job> result = new CompletableFuture<>();
+
+        client.newCall(new Request.Builder()
+                .url(baseUrl + "/jobs/" + jobId).get().build())
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        result.completeExceptionally(e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) {
+                        if (response.code() == 200) {
+                            try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                                result.complete(gson.fromJson(reader, Job.class));
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("The job could not be downloaded"));
+                        }
+                    }
+                });
+
+        return result;
+    }
+
+    public CompletableFuture<SceneDescription> getScene(Job job) {
         CompletableFuture<SceneDescription> result = new CompletableFuture<>();
 
         client.newCall(new Request.Builder()
-                .url(baseUrl + "/jobs/" + jobId + "/files/scene.json").get().build())
+                .url(baseUrl + job.getSceneUrl()).get().build())
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -71,16 +99,16 @@ public class RenderServerApiClient {
         return result;
     }
 
-    public CompletableFuture downloadFoliage(String jobId, File file) {
-        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.foliage", file);
+    public CompletableFuture downloadFoliage(Job job, File file) {
+        return downloadFile(baseUrl + job.getFoliageUrl(), file);
     }
 
-    public CompletableFuture downloadGrass(String jobId, File file) {
-        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.grass", file);
+    public CompletableFuture downloadGrass(Job job, File file) {
+        return downloadFile(baseUrl + job.getGrassUrl(), file);
     }
 
-    public CompletableFuture downloadOctree(String jobId, File file) {
-        return downloadFile(baseUrl + "/jobs/" + jobId + "/files/scene.octree", file);
+    public CompletableFuture downloadOctree(Job job, File file) {
+        return downloadFile(baseUrl + job.getOctreeUrl(), file);
     }
 
     private CompletableFuture downloadFile(String url, File file) {
