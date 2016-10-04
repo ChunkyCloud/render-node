@@ -47,6 +47,8 @@ public class RenderWorker extends Thread {
 
             try {
                 connect();
+                channel.queueDeclare("rs_dumps", true, false, false, null);
+
                 QueueingConsumer consumer = new QueueingConsumer(channel);
                 channel.basicQos(poolSize, false); // only fetch <poolSize> tasks at once
                 channel.basicConsume("rs_tasks", false, consumer);
