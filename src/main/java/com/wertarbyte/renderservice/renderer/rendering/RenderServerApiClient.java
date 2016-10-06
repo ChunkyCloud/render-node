@@ -29,6 +29,7 @@ import okio.Okio;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class RenderServerApiClient {
@@ -109,6 +110,37 @@ public class RenderServerApiClient {
 
     public CompletableFuture downloadOctree(Job job, File file) {
         return downloadFile(baseUrl + job.getOctreeUrl(), file);
+    }
+
+    public CompletableFuture<File> downloadSkymapTo(String url, Path targetDir) {
+        CompletableFuture<File> result = new CompletableFuture<>();
+
+        client.newCall(new Request.Builder()
+                .url(url).get().build())
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        result.completeExceptionally(e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) {
+                        if (response.code() == 200) {
+                            File file = new File(targetDir.toFile(), response.header("X-Filename"));
+
+                            try (BufferedSink sink = Okio.buffer(Okio.sink(file))) {
+                                sink.writeAll(response.body().source());
+                                result.complete(file);
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("Download of " + url + " failed"));
+                        }
+                    }
+                });
+
+        return result;
     }
 
     private CompletableFuture downloadFile(String url, File file) {

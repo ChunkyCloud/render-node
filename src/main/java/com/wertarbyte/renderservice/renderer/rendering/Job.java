@@ -27,6 +27,10 @@ public class Job {
         return getUrl("octree");
     }
 
+    public Optional<String> getSkymapUrl() {
+        return files.stream().filter(t -> t.getType().equalsIgnoreCase("skymap")).findFirst().map(JobFile::getUrl);
+    }
+
     private String getUrl(String type) {
         Optional<JobFile> file = files.stream().filter(t -> t.getType().equalsIgnoreCase(type)).findFirst();
         if (file.isPresent()) {

@@ -15,6 +15,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
@@ -55,6 +56,11 @@ public class AssignmentWorker implements Runnable {
                     apiClient.downloadGrass(job, new File(workingDir.toFile(), "scene.grass")),
                     apiClient.downloadOctree(job, new File(workingDir.toFile(), "scene.octree"))
             ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
+
+            Optional<String> skymapUrl = job.getSkymapUrl();
+            if (skymapUrl.isPresent()) {
+                sceneDescription[0].getSky().setSkymap(apiClient.downloadSkymapTo(skymapUrl.get(), workingDir).get().getAbsolutePath());
+            }
 
             LOGGER.info("Rendering...");
             chunky.setScene(sceneDescription[0]);
