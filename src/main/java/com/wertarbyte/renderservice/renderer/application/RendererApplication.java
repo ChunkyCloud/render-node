@@ -20,6 +20,7 @@
 package com.wertarbyte.renderservice.renderer.application;
 
 import com.wertarbyte.renderservice.libchunky.ChunkyProcessWrapper;
+import com.wertarbyte.renderservice.renderer.rendering.RenderServerApiClient;
 import com.wertarbyte.renderservice.renderer.rendering.RenderWorker;
 import com.wertarbyte.renderservice.renderer.util.MinecraftDownloader;
 import okhttp3.Response;
@@ -31,15 +32,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.UUID;
 
 public abstract class RendererApplication {
     private static final String TEXTURE_VERSION = "1.10";
     private static final Logger LOGGER = LogManager.getLogger(RendererApplication.class);
-    private static final String SETTINGS_FILENAME = "serverSettings.yml";
 
-    //private final RenderServerApiClient api;
+    private final RenderServerApiClient api;
     private final RendererSettings settings;
     private final Path jobDirectory;
     private final ChunkyWrapperFactory chunkyWrapperFactory;
@@ -47,11 +46,14 @@ public abstract class RendererApplication {
     private RenderWorker worker;
     private UUID id = UUID.randomUUID();
     private File texturepackPath;
-    private Optional<UUID> account;
 
     public RendererApplication(RendererSettings settings) {
         this.settings = settings;
-        //api = new RenderServerApiClient(baseUrl, cacheDirectory, maxCacheSize);
+        api = new RenderServerApiClient(
+                settings.getMasterApiUrl(),
+                settings.getCacheDirectory().orElse(Paths.get(System.getProperty("user.dir"), "rs_cache").toFile()),
+                settings.getMaxCacheSize().orElse(512L)
+        );
 
         try (Response response = MinecraftDownloader.downloadMinecraft(TEXTURE_VERSION).get()) {
             texturepackPath = File.createTempFile("minecraft", ".jar");
@@ -66,17 +68,6 @@ public abstract class RendererApplication {
         }
         LOGGER.info("Finished downloading");
 
-        /*
-        try {
-            texturepackPath = TempFileUtil.extractTemporary(BundledResourceManager.getDefaultTextures());
-            LOGGER.info("Temporary textures path: " + texturepackPath.getAbsolutePath());
-        } catch (IOException e) {
-            LOGGER.error("Could not extract textures", e);
-            System.exit(1);
-        }
-        */
-        // TODO
-
         if (getSettings().getJobPath().isPresent()) {
             jobDirectory = getSettings().getJobPath().get().toPath();
         } else {
@@ -90,13 +81,13 @@ public abstract class RendererApplication {
             chunky.setThreadCount(getSettings().getThreads().orElse(2));
             chunky.setJvmMinMemory(getSettings().getXms().orElse(1024));
             chunky.setJvmMaxMemory(getSettings().getXmx().orElse(2048));
-            // chunky.setTexturepack(texturepackPath); //TODO
+            chunky.setTexturepack(texturepackPath);
             return chunky;
         };
     }
 
     public void start() {
-        worker = new RenderWorker("172.17.0.3", 5672, getSettings().getProcesses().orElse(1), jobDirectory, chunkyWrapperFactory);
+        worker = new RenderWorker("172.17.0.3", 5672, getSettings().getProcesses().orElse(1), jobDirectory, chunkyWrapperFactory, api);
         worker.start();
     }
 

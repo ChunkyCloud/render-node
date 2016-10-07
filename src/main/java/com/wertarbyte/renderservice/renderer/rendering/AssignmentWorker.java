@@ -24,18 +24,18 @@ public class AssignmentWorker implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(AssignmentWorker.class);
     private static final Gson gson = new Gson();
 
-    private final RenderServerApiClient apiClient;
     private final QueueingConsumer.Delivery delivery;
     private final Channel channel;
     private final Path workingDir;
     private final ChunkyWrapper chunky;
+    private final RenderServerApiClient apiClient;
 
-    public AssignmentWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir, ChunkyWrapper chunky) {
-        this.apiClient = new RenderServerApiClient("http://localhost:3000", new File("/tmp"), 1024 * 1024 * 1024);
+    public AssignmentWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir, ChunkyWrapper chunky, RenderServerApiClient apiClient) {
         this.delivery = delivery;
         this.channel = channel;
         this.workingDir = workingDir;
         this.chunky = chunky;
+        this.apiClient = apiClient;
     }
 
     @Override

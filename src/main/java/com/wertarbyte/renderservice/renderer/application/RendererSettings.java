@@ -32,33 +32,22 @@ public class RendererSettings {
     private Integer xmx;
     private File jobPath;
     private Integer maxUploadRate;
-    private String masterServer;
+    private String masterApiUrl;
+    private File cacheDirectory;
+    private Long maxCacheSize;
 
-    public static RendererSettings fromCli(CommandlineArguments arguments) {
-        return new RendererSettings(
-                arguments.getProcesses(),
-                arguments.getThreads(),
-                arguments.getXms(),
-                arguments.getXmx(),
-                arguments.getJobPath(),
-                arguments.getMaxUploadRate(),
-                arguments.getMasterServer()
-        );
-    }
-
-    public RendererSettings(int processes, int threads, int xms, int xmx,
-                            File jobPath, Integer maxUploadRate, String masterServer) {
+    public RendererSettings(Integer processes, Integer threads, Integer xms, Integer xmx,
+                            File jobPath, Integer maxUploadRate,
+                            String masterApiUrl, File cacheDirectory, Long maxCacheSize) {
         this.processes = processes;
         this.threads = threads;
         this.xms = xms;
         this.xmx = xmx;
         this.jobPath = jobPath;
         this.maxUploadRate = maxUploadRate;
-        this.masterServer = masterServer;
-    }
-
-    public String getMasterServer() {
-        return masterServer;
+        this.masterApiUrl = masterApiUrl;
+        this.cacheDirectory = cacheDirectory;
+        this.maxCacheSize = maxCacheSize;
     }
 
     public Optional<Integer> getProcesses() {
@@ -83,5 +72,17 @@ public class RendererSettings {
 
     public Optional<Integer> getMaxUploadRate() {
         return Optional.ofNullable(maxUploadRate);
+    }
+
+    public String getMasterApiUrl() {
+        return masterApiUrl;
+    }
+
+    public Optional<File> getCacheDirectory() {
+        return Optional.ofNullable(cacheDirectory);
+    }
+
+    public Optional<Long> getMaxCacheSize() {
+        return Optional.ofNullable(maxCacheSize);
     }
 }

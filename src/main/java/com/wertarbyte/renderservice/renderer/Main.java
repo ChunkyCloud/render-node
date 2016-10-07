@@ -43,9 +43,17 @@ public class Main {
             return;
         }
 
-        RendererSettings settings;
-        settings = RendererSettings.fromCli(arguments);
-
+        RendererSettings settings = new RendererSettings(
+                arguments.getProcesses(),
+                arguments.getThreads(),
+                arguments.getXms(),
+                arguments.getXmx(),
+                arguments.getJobPath(),
+                arguments.getMaxUploadRate(),
+                arguments.getMasterServer(),
+                arguments.getCacheDirectory(),
+                arguments.getMaxCacheSize()
+        );
         new HeadlessRenderer(settings).start();
     }
 }

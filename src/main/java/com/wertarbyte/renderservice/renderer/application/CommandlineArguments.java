@@ -65,7 +65,16 @@ public interface CommandlineArguments {
     Integer getMaxUploadRate();
 
     @Option(longName = "master",
-            description = "address and port of the master server",
-            defaultToNull = true)
+            description = "address and port of the master server")
     String getMasterServer();
+
+    @Option(longName = "cache-directory",
+            description = "cache directory for scene files",
+            defaultToNull = true)
+    File getCacheDirectory();
+
+    @Option(longName = "max-cache-size",
+            description = "maximum cache size, in mb",
+            defaultToNull = true)
+    Long getMaxCacheSize();
 }
