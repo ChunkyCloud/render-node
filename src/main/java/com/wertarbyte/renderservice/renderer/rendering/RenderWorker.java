@@ -9,7 +9,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,15 +34,18 @@ public class RenderWorker extends Thread {
     private Connection conn;
     private Channel channel;
 
-    public RenderWorker(String host, int port, int poolSize, Path jobDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
+    public RenderWorker(String uri, int poolSize, Path jobDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
         this.poolSize = poolSize;
         executorService = Executors.newFixedThreadPool(poolSize);
         this.jobDirectory = jobDirectory;
         this.chunkyFactory = chunkyFactory;
         this.apiClient = apiClient;
         factory = new ConnectionFactory();
-        factory.setHost(host);
-        factory.setPort(port);
+        try {
+            factory.setUri(uri);
+        } catch (URISyntaxException | NoSuchAlgorithmException | KeyManagementException e) {
+            throw new IllegalArgumentException("Invalid RabbitMQ URI", e);
+        }
     }
 
     @Override
@@ -49,7 +55,6 @@ public class RenderWorker extends Thread {
 
             try {
                 connect();
-                channel.queueDeclare("rs_dumps", true, false, false, null);
 
                 QueueingConsumer consumer = new QueueingConsumer(channel);
                 channel.basicQos(poolSize, false); // only fetch <poolSize> tasks at once

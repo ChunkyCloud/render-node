@@ -21,6 +21,7 @@ package com.wertarbyte.renderservice.renderer.application;
 
 import com.wertarbyte.renderservice.libchunky.ChunkyProcessWrapper;
 import com.wertarbyte.renderservice.renderer.rendering.RenderServerApiClient;
+import com.wertarbyte.renderservice.renderer.rendering.RenderServiceInfo;
 import com.wertarbyte.renderservice.renderer.rendering.RenderWorker;
 import com.wertarbyte.renderservice.renderer.util.MinecraftDownloader;
 import okhttp3.Response;
@@ -35,13 +36,14 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 public abstract class RendererApplication {
+    private static final int VERSION = 1;
     private static final String TEXTURE_VERSION = "1.10";
     private static final Logger LOGGER = LogManager.getLogger(RendererApplication.class);
 
     private final RenderServerApiClient api;
     private final RendererSettings settings;
-    private final Path jobDirectory;
-    private final ChunkyWrapperFactory chunkyWrapperFactory;
+    private Path jobDirectory;
+    private ChunkyWrapperFactory chunkyWrapperFactory;
 
     private RenderWorker worker;
     private UUID id = UUID.randomUUID();
@@ -54,6 +56,24 @@ public abstract class RendererApplication {
                 settings.getCacheDirectory().orElse(Paths.get(System.getProperty("user.dir"), "rs_cache").toFile()),
                 settings.getMaxCacheSize().orElse(512L)
         );
+    }
+
+    public void start() {
+        RenderServiceInfo rsInfo;
+        try {
+            rsInfo = api.getInfo().get();
+        } catch (Exception e) {
+            LOGGER.error("Could not fetch render service info", e);
+            System.exit(-1);
+            return;
+        }
+
+        if (rsInfo.getVersion() > VERSION) {
+            LOGGER.error("Update required. The minimum required version is " + rsInfo.getVersion() + ", your version is " + VERSION + ".");
+            System.exit(-42);
+            return;
+        }
+
 
         try (Response response = MinecraftDownloader.downloadMinecraft(TEXTURE_VERSION).get()) {
             texturepackPath = File.createTempFile("minecraft", ".jar");
@@ -65,6 +85,7 @@ public abstract class RendererApplication {
         } catch (Exception e) {
             LOGGER.error("Could not download assets", e);
             System.exit(-1);
+            return;
         }
         LOGGER.info("Finished downloading");
 
@@ -84,10 +105,8 @@ public abstract class RendererApplication {
             chunky.setTexturepack(texturepackPath);
             return chunky;
         };
-    }
 
-    public void start() {
-        worker = new RenderWorker("172.17.0.3", 5672, getSettings().getProcesses().orElse(1), jobDirectory, chunkyWrapperFactory, api);
+        worker = new RenderWorker(rsInfo.getRabbitMq(), getSettings().getProcesses().orElse(1), jobDirectory, chunkyWrapperFactory, api);
         worker.start();
     }
 

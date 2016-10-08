@@ -44,6 +44,34 @@ public class RenderServerApiClient {
                 .build();
     }
 
+    public CompletableFuture<RenderServiceInfo> getInfo() {
+        CompletableFuture<RenderServiceInfo> result = new CompletableFuture<>();
+
+        client.newCall(new Request.Builder()
+                .url(baseUrl + "/info").get().build())
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        result.completeExceptionally(e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) {
+                        if (response.code() == 200) {
+                            try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+                                result.complete(gson.fromJson(reader, RenderServiceInfo.class));
+                            } catch (IOException e) {
+                                result.completeExceptionally(e);
+                            }
+                        } else {
+                            result.completeExceptionally(new IOException("The render service info could not be downloaded"));
+                        }
+                    }
+                });
+
+        return result;
+    }
+
     public CompletableFuture<Job> getJob(String jobId) {
         CompletableFuture<Job> result = new CompletableFuture<>();
 
