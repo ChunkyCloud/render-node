@@ -144,7 +144,7 @@ public class RenderServerApiClient {
         CompletableFuture<File> result = new CompletableFuture<>();
 
         client.newCall(new Request.Builder()
-                .url(url).get().build())
+                .url(baseUrl + url).get().build())
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
