@@ -7,6 +7,7 @@ import com.rabbitmq.client.QueueingConsumer;
 import com.wertarbyte.renderservice.libchunky.ChunkyWrapper;
 import com.wertarbyte.renderservice.libchunky.RenderListenerAdapter;
 import com.wertarbyte.renderservice.libchunky.scene.SceneDescription;
+import com.wertarbyte.renderservice.libchunky.util.FileUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -94,6 +95,8 @@ public class AssignmentWorker implements Runnable {
             } catch (IOException e1) {
                 LOGGER.error("Could not nack a failed task", e);
             }
+        } finally {
+            FileUtil.deleteDirectory(workingDir.toFile());
         }
     }
 }
