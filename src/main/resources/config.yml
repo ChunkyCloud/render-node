@@ -1,9 +1,0 @@
-jvm:
-   xms: 1024M
-   xmx: 4096M
-rendering:
-   maxParallelInstances: 1
-   threads: 2
-uploadRate: 1024
-rabbitmq:
-  host: localhost

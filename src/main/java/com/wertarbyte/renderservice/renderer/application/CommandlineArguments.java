@@ -65,7 +65,8 @@ public interface CommandlineArguments {
     Integer getMaxUploadRate();
 
     @Option(longName = "master",
-            description = "address and port of the master server")
+            description = "URL of the master server API endpoint",
+            defaultValue = "https://api.rs.wertarbyte.com")
     String getMasterServer();
 
     @Option(longName = "cache-directory",
