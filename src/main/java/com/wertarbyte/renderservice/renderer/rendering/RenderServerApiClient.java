@@ -20,14 +20,14 @@
 package com.wertarbyte.renderservice.renderer.rendering;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.wertarbyte.renderservice.libchunky.scene.SceneDescription;
 import okhttp3.*;
 import okio.BufferedSink;
 import okio.Okio;
+import se.llbit.chunky.renderer.scene.SceneDescription;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -114,8 +114,10 @@ public class RenderServerApiClient {
                     @Override
                     public void onResponse(Call call, Response response) {
                         if (response.code() == 200) {
-                            try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
-                                result.complete(new SceneDescription(gson.fromJson(reader, JsonObject.class)));
+                            try (InputStream in = response.body().byteStream()) {
+                                SceneDescription sceneDescription = new SceneDescription();
+                                sceneDescription.loadDescription(in);
+                                result.complete(sceneDescription);
                             } catch (IOException e) {
                                 result.completeExceptionally(e);
                             }

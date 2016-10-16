@@ -6,10 +6,10 @@ import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import com.wertarbyte.renderservice.libchunky.ChunkyWrapper;
 import com.wertarbyte.renderservice.libchunky.RenderListenerAdapter;
-import com.wertarbyte.renderservice.libchunky.scene.SceneDescription;
 import com.wertarbyte.renderservice.libchunky.util.FileUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import se.llbit.chunky.renderer.scene.SceneDescription;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -50,7 +50,7 @@ public class AssignmentWorker implements Runnable {
             LOGGER.info("Downloading scene files...");
             CompletableFuture.allOf(
                     apiClient.getScene(job).thenAccept((scene -> {
-                        scene.setName("scene");
+                        scene.name = "scene";
                         sceneDescription[0] = scene;
                     })),
                     apiClient.downloadFoliage(job, new File(workingDir.toFile(), "scene.foliage")),
@@ -60,7 +60,7 @@ public class AssignmentWorker implements Runnable {
 
             Optional<String> skymapUrl = job.getSkymapUrl();
             if (skymapUrl.isPresent()) {
-                sceneDescription[0].getSky().setSkymap(apiClient.downloadSkymapTo(skymapUrl.get(), workingDir).get().getAbsolutePath());
+                sceneDescription[0].sky().loadSkymap(apiClient.downloadSkymapTo(skymapUrl.get(), workingDir).get().getAbsolutePath());
             }
 
             LOGGER.info("Rendering...");
