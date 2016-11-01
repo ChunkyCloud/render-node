@@ -105,7 +105,7 @@ public abstract class RendererApplication {
             return chunky;
         };
 
-        worker = new RenderWorker(rsInfo.getRabbitMq(), getSettings().getProcesses().orElse(1), jobDirectory, chunkyWrapperFactory, api);
+        worker = new RenderWorker(rsInfo.getRabbitMq(), getSettings().getProcesses().orElse(1), getSettings().getName().orElse(null), jobDirectory, chunkyWrapperFactory, api);
         worker.start();
     }
 

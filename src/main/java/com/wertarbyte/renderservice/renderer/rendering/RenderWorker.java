@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,7 +53,7 @@ public class RenderWorker extends Thread {
     private Connection conn;
     private Channel channel;
 
-    public RenderWorker(String uri, int poolSize, Path jobDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
+    public RenderWorker(String uri, int poolSize, String name, Path jobDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
         this.poolSize = poolSize;
         executorService = Executors.newFixedThreadPool(poolSize);
         this.jobDirectory = jobDirectory;
@@ -64,6 +65,12 @@ public class RenderWorker extends Thread {
         } catch (URISyntaxException | NoSuchAlgorithmException | KeyManagementException e) {
             throw new IllegalArgumentException("Invalid RabbitMQ URI", e);
         }
+
+        Map<String, Object> connectionProps = factory.getClientProperties();
+        if (name != null) {
+            connectionProps.put("x-rs-name", name);
+        }
+        factory.setClientProperties(connectionProps);
     }
 
     @Override

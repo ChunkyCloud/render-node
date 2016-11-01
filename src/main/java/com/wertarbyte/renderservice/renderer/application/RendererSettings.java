@@ -34,10 +34,12 @@ public class RendererSettings {
     private String masterApiUrl;
     private File cacheDirectory;
     private Long maxCacheSize;
+    private String name;
 
     public RendererSettings(Integer processes, Integer threads, Integer xms, Integer xmx,
                             File jobPath, Integer maxUploadRate,
-                            String masterApiUrl, File cacheDirectory, Long maxCacheSize) {
+                            String masterApiUrl, File cacheDirectory, Long maxCacheSize,
+                            String name) {
         this.processes = processes;
         this.threads = threads;
         this.xms = xms;
@@ -47,6 +49,7 @@ public class RendererSettings {
         this.masterApiUrl = masterApiUrl;
         this.cacheDirectory = cacheDirectory;
         this.maxCacheSize = maxCacheSize;
+        this.name = name;
     }
 
     public Optional<Integer> getProcesses() {
@@ -83,5 +86,9 @@ public class RendererSettings {
 
     public Optional<Long> getMaxCacheSize() {
         return Optional.ofNullable(maxCacheSize);
+    }
+
+    public Optional<String> getName() {
+        return Optional.ofNullable(name);
     }
 }

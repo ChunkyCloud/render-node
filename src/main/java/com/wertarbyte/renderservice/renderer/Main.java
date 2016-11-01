@@ -51,7 +51,8 @@ public class Main {
                 arguments.getMaxUploadRate(),
                 arguments.getMasterServer(),
                 arguments.getCacheDirectory(),
-                arguments.getMaxCacheSize()
+                arguments.getMaxCacheSize(),
+                arguments.getName()
         );
         new HeadlessRenderer(settings).start();
     }

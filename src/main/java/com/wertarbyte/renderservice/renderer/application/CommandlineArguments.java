@@ -77,4 +77,8 @@ public interface CommandlineArguments {
             description = "maximum cache size, in mb",
             defaultToNull = true)
     Long getMaxCacheSize();
+
+    @Option(longName = "name",
+            defaultToNull = true)
+    String getName();
 }
