@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 import okhttp3.*;
 import okio.BufferedSink;
 import okio.Okio;
-import se.llbit.chunky.renderer.scene.SceneDescription;
+import se.llbit.chunky.renderer.scene.Scene;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,8 +99,8 @@ public class RenderServerApiClient {
         return result;
     }
 
-    public CompletableFuture<SceneDescription> getScene(Job job) {
-        CompletableFuture<SceneDescription> result = new CompletableFuture<>();
+    public CompletableFuture<Scene> getScene(Job job) {
+        CompletableFuture<Scene> result = new CompletableFuture<>();
 
         client.newCall(new Request.Builder()
                 .url(baseUrl + job.getSceneUrl()).get().build())
@@ -114,7 +114,7 @@ public class RenderServerApiClient {
                     public void onResponse(Call call, Response response) {
                         if (response.code() == 200) {
                             try (InputStream in = response.body().byteStream()) {
-                                SceneDescription sceneDescription = new SceneDescription();
+                                Scene sceneDescription = new Scene();
                                 sceneDescription.loadDescription(in);
                                 result.complete(sceneDescription);
                             } catch (IOException e) {

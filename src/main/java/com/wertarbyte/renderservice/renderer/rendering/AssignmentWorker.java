@@ -27,7 +27,7 @@ import com.wertarbyte.renderservice.libchunky.RenderListenerAdapter;
 import com.wertarbyte.renderservice.libchunky.util.FileUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import se.llbit.chunky.renderer.scene.SceneDescription;
+import se.llbit.chunky.renderer.scene.Scene;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -64,7 +64,7 @@ public class AssignmentWorker implements Runnable {
             LOGGER.info(String.format("New assignment: %d spp for job %s", assignment.getSpp(), assignment.getJobId()));
             Job job = apiClient.getJob(assignment.getJobId()).get(10, TimeUnit.MINUTES);
 
-            final SceneDescription[] sceneDescription = new SceneDescription[1];
+            final Scene[] sceneDescription = new Scene[1];
             LOGGER.info("Downloading scene files...");
             CompletableFuture.allOf(
                     apiClient.getScene(job).thenAccept((scene -> {

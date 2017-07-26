@@ -24,7 +24,7 @@
 
     <groupId>com.wertarbyte.renderservice</groupId>
     <artifactId>rendernode</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
 
     <licenses>
         <license>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.wertarbyte.renderservice</groupId>
             <artifactId>libchunky</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
