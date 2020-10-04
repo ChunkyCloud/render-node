@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.renderer.rendering;
+package de.lemaik.renderservice.renderer.rendering;
 
 public class RenderServiceInfo {
     private int version;

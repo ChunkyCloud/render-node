@@ -16,21 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.renderer.application;
+package de.lemaik.renderservice.renderer.chunky;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+/**
+ * A factory for {@link ChunkyWrapper}s.
+ */
+public interface ChunkyWrapperFactory {
 
-public class HeadlessRenderer extends RendererApplication {
-    private static final Logger LOGGER = LogManager.getLogger(HeadlessRenderer.class);
-
-    public HeadlessRenderer(RendererSettings settings) {
-        super(settings);
-    }
-
-    @Override
-    protected void onUpdateAvailable() {
-        LOGGER.error("An update is available. You need to download it in order to use the renderer.");
-        System.exit(1);
-    }
+  ChunkyWrapper getChunkyInstance();
 }

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.renderer.application;
+package de.lemaik.renderservice.renderer.application;
 
 import com.lexicalscope.jewel.cli.Option;
 
@@ -65,7 +65,7 @@ public interface CommandlineArguments {
 
     @Option(longName = "master",
             description = "URL of the master server API endpoint",
-            defaultValue = "https://api.rs.wertarbyte.com")
+            defaultValue = "https://api.chunkycloud.lemaik.de")
     String getMasterServer();
 
     @Option(longName = "cache-directory",

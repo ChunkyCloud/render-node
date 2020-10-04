@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wertarbyte.renderservice.renderer;
+package de.lemaik.renderservice.renderer;
 
 import com.lexicalscope.jewel.cli.Cli;
 import com.lexicalscope.jewel.cli.CliFactory;
-import com.wertarbyte.renderservice.renderer.application.CommandlineArguments;
-import com.wertarbyte.renderservice.renderer.application.HeadlessRenderer;
-import com.wertarbyte.renderservice.renderer.application.RendererSettings;
+import de.lemaik.renderservice.renderer.application.CommandlineArguments;
+import de.lemaik.renderservice.renderer.application.HeadlessRenderer;
+import de.lemaik.renderservice.renderer.application.RendererSettings;
 
 /**
  * The main class.

@@ -48,9 +48,15 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.wertarbyte.renderservice</groupId>
-            <artifactId>libchunky</artifactId>
-            <version>1.4.3</version>
+            <groupId>se.llbit</groupId>
+            <artifactId>chunky-core</artifactId>
+            <version>2.2.0-382-g9695d95c</version>
+        </dependency>
+        <dependency>
+            <!-- dependency of chunky -->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -111,13 +117,36 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.wertarbyte.renderservice.renderer.Main</mainClass>
+                            <mainClass>de.lemaik.renderservice.renderer.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.2</version>
+                <executions>
+                    <execution>
+                        <id>install-chunky</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <file>${basedir}/chunky.jar</file>
+                            <repositoryLayout>default</repositoryLayout>
+                            <groupId>se.llbit</groupId>
+                            <artifactId>chunky-core</artifactId>
+                            <version>2.2.0-382-g9695d95c</version>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
