@@ -71,6 +71,7 @@ public class RenderWorker extends Thread {
     if (name != null) {
       connectionProps.put("x-rs-name", name);
     }
+    connectionProps.put("x-rs-threads", threads);
     factory.setClientProperties(connectionProps);
   }
 
