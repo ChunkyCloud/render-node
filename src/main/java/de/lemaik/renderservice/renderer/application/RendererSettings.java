@@ -30,6 +30,7 @@ public class RendererSettings {
     private Integer xms;
     private Integer xmx;
     private File jobPath;
+    private File texturepacksPath;
     private Integer maxUploadRate;
     private String masterApiUrl;
     private File cacheDirectory;
@@ -37,7 +38,7 @@ public class RendererSettings {
     private String name;
 
     public RendererSettings(Integer processes, Integer threads, Integer xms, Integer xmx,
-                            File jobPath, Integer maxUploadRate,
+                            File jobPath, File texturepacksPath, Integer maxUploadRate,
                             String masterApiUrl, File cacheDirectory, Long maxCacheSize,
                             String name) {
         this.processes = processes;
@@ -45,6 +46,7 @@ public class RendererSettings {
         this.xms = xms;
         this.xmx = xmx;
         this.jobPath = jobPath;
+        this.texturepacksPath = texturepacksPath;
         this.maxUploadRate = maxUploadRate;
         this.masterApiUrl = masterApiUrl;
         this.cacheDirectory = cacheDirectory;
@@ -70,6 +72,10 @@ public class RendererSettings {
 
     public Optional<File> getJobPath() {
         return Optional.ofNullable(jobPath);
+    }
+
+    public Optional<File> getTexturepacksPath() {
+        return Optional.ofNullable(texturepacksPath);
     }
 
     public Optional<Integer> getMaxUploadRate() {

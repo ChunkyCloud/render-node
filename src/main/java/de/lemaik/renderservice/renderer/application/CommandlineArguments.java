@@ -53,6 +53,11 @@ public interface CommandlineArguments {
             defaultValue = "2048")
     int getXmx();
 
+    @Option(longName = "texturepacks-path",
+        description = "path for texturepacks",
+        defaultToNull = true)
+    File getTexturepacksPath();
+
     @Option(longName = "job-path",
             description = "path for temporary job data",
             defaultToNull = true)

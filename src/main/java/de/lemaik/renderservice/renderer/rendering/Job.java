@@ -25,6 +25,7 @@ public class Job {
 
   private String id;
   private List<JobFile> files;
+  private String texturepack;
 
   public String getId() {
     return id;
@@ -41,6 +42,7 @@ public class Job {
   public Optional<String> getGrassUrl() {
     return getUrl("grass");
   }
+
 
   public String getOctreeUrl() {
     return getUrl("octree").get();
@@ -59,6 +61,10 @@ public class Job {
     Optional<JobFile> file = files.stream().filter(t -> t.getType().equalsIgnoreCase(type))
         .findFirst();
     return file.map(JobFile::getUrl);
+  }
+
+  public String getTexturepack() {
+    return texturepack;
   }
 
   public class JobFile {

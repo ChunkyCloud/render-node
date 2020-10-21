@@ -24,6 +24,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
+import de.lemaik.renderservice.renderer.chunky.RenderException;
 import de.lemaik.renderservice.renderer.util.FileUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -46,15 +47,17 @@ public class AssignmentWorker implements Runnable {
   private final QueueingConsumer.Delivery delivery;
   private final Channel channel;
   private final Path workingDir;
+  private final Path texturepacksDir;
   private final int threads;
   private final ChunkyWrapper chunky;
   private final RenderServerApiClient apiClient;
 
   public AssignmentWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
-      int threads, ChunkyWrapper chunky, RenderServerApiClient apiClient) {
+      Path texturepacksDir, int threads, ChunkyWrapper chunky, RenderServerApiClient apiClient) {
     this.delivery = delivery;
     this.channel = channel;
     this.workingDir = workingDir;
+    this.texturepacksDir = texturepacksDir;
     this.threads = threads;
     this.chunky = chunky;
     this.apiClient = apiClient;
@@ -97,8 +100,19 @@ public class AssignmentWorker implements Runnable {
       ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
       LOGGER.info("Rendering...");
+
+      File texturepack = null;
+      if (job.getTexturepack() != null) {
+        texturepack = new File(texturepacksDir.toFile(),
+            job.getTexturepack().replaceAll("[^a-zA-Z0-9-_.]", "") + ".zip");
+        if (!texturepack.isFile()) {
+          throw new RenderException("Texturepack not found: " + texturepack.getAbsolutePath());
+        }
+      }
+
       byte[] dump = chunky
-          .render(null, new File(workingDir.toFile(), "scene.json"), assignment.getSpp(), threads,
+          .render(texturepack, new File(workingDir.toFile(), "scene.json"), assignment.getSpp(),
+              threads,
               100).get();
 
       LOGGER.info("Uploading...");

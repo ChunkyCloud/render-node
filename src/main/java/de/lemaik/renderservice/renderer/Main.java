@@ -28,32 +28,34 @@ import de.lemaik.renderservice.renderer.application.RendererSettings;
  * The main class.
  */
 public class Main {
-    private Main() {
+
+  private Main() {
+  }
+
+  public static void main(String[] args) {
+    Cli<CommandlineArguments> cli = CliFactory.createCli(CommandlineArguments.class);
+
+    CommandlineArguments arguments;
+    try {
+      arguments = cli.parseArguments(args);
+    } catch (Exception e) {
+      System.out.println(cli.getHelpMessage());
+      return;
     }
 
-    public static void main(String[] args) {
-        Cli<CommandlineArguments> cli = CliFactory.createCli(CommandlineArguments.class);
-
-        CommandlineArguments arguments;
-        try {
-            arguments = cli.parseArguments(args);
-        } catch (Exception e) {
-            System.out.println(cli.getHelpMessage());
-            return;
-        }
-
-        RendererSettings settings = new RendererSettings(
-                arguments.getProcesses(),
-                arguments.getThreads(),
-                arguments.getXms(),
-                arguments.getXmx(),
-                arguments.getJobPath(),
-                arguments.getMaxUploadRate(),
-                arguments.getMasterServer(),
-                arguments.getCacheDirectory(),
-                arguments.getMaxCacheSize(),
-                arguments.getName()
-        );
-        new HeadlessRenderer(settings).start();
-    }
+    RendererSettings settings = new RendererSettings(
+        arguments.getProcesses(),
+        arguments.getThreads(),
+        arguments.getXms(),
+        arguments.getXmx(),
+        arguments.getJobPath(),
+        arguments.getTexturepacksPath(),
+        arguments.getMaxUploadRate(),
+        arguments.getMasterServer(),
+        arguments.getCacheDirectory(),
+        arguments.getMaxCacheSize(),
+        arguments.getName()
+    );
+    new HeadlessRenderer(settings).start();
+  }
 }

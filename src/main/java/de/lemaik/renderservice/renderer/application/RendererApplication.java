@@ -44,6 +44,7 @@ public abstract class RendererApplication {
   private final RenderServerApiClient api;
   private final RendererSettings settings;
   private Path jobDirectory;
+  private Path texturepacksDirectory;
   private ChunkyWrapperFactory chunkyWrapperFactory;
 
   private RenderWorker worker;
@@ -100,6 +101,14 @@ public abstract class RendererApplication {
     }
     jobDirectory.toFile().mkdirs();
 
+    if (getSettings().getTexturepacksPath().isPresent()) {
+      texturepacksDirectory = getSettings().getTexturepacksPath().get().toPath();
+    } else {
+      texturepacksDirectory = Paths.get(System.getProperty("user.dir"), "rs_texturepacks");
+      LOGGER.warn("No texturepacks path specified, using " + texturepacksDirectory.toString());
+    }
+    texturepacksDirectory.toFile().mkdirs();
+
     chunkyWrapperFactory = () -> {
       ChunkyWrapper chunky = new EmbeddedChunkyWrapper();
       chunky.setDefaultTexturepack(texturepackPath);
@@ -107,7 +116,7 @@ public abstract class RendererApplication {
     };
 
     worker = new RenderWorker(rsInfo.getRabbitMq(), getSettings().getThreads().orElse(2),
-        getSettings().getName().orElse(null), jobDirectory, chunkyWrapperFactory, api);
+        getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory, chunkyWrapperFactory, api);
     worker.start();
   }
 
