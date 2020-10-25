@@ -26,9 +26,17 @@ public class EmbeddedChunkyWrapper implements ChunkyWrapper {
       texturepack = defaultTexturepack;
     }
 
+    // all chunky instances share their texturepacks statically
     if (!texturepack.equals(previousTexturepack)) {
-      // this means that only one texturepack can be used for all maps, if rendering with multiple chunky instances
-      TexturePackLoader.loadTexturePacks(texturepack.getAbsolutePath(), false);
+      if (texturepack.equals(defaultTexturepack)) {
+        TexturePackLoader
+            .loadTexturePacks(new String[]{defaultTexturepack.getAbsolutePath()}, false);
+      } else {
+        // load the selected texturepack and the default texturepack as fallback
+        TexturePackLoader.loadTexturePacks(
+            new String[]{texturepack.getAbsolutePath(), defaultTexturepack.getAbsolutePath()},
+            false);
+      }
       previousTexturepack = texturepack;
     }
 
