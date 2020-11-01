@@ -26,6 +26,7 @@ public class Job {
   private String id;
   private List<JobFile> files;
   private String texturepack;
+  private boolean cancelled;
 
   public String getId() {
     return id;
@@ -65,6 +66,10 @@ public class Job {
 
   public String getTexturepack() {
     return texturepack;
+  }
+
+  public boolean isCancelled() {
+    return cancelled;
   }
 
   public class JobFile {

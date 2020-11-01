@@ -71,6 +71,11 @@ public class AssignmentWorker implements Runnable {
       LOGGER.info(String
           .format("New assignment: %d spp for job %s", assignment.getSpp(), assignment.getJobId()));
       Job job = apiClient.getJob(assignment.getJobId()).get(10, TimeUnit.MINUTES);
+      if (job.isCancelled()) {
+        LOGGER.info("Job is cancelled, skipping and removing it from the queue");
+        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+        return;
+      }
 
       final JsonObject[] sceneDescription = new JsonObject[1];
       LOGGER.info("Downloading scene files...");
