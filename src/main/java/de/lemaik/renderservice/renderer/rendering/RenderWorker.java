@@ -47,9 +47,9 @@ public class RenderWorker extends Thread {
   private final Path texturepacksDirectory;
   private final ChunkyWrapperFactory chunkyFactory;
   private final int threads;
-  private final int MAX_RESTART_DELAY_SECONDS = 1800; // 30 minutes
+  private final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
   private final RenderServerApiClient apiClient;
-  private int nextRestartDelaySeconds = 5;
+  private int nextRestartDelaySeconds = 1;
   private ConnectionFactory factory;
   private Connection conn;
   private Channel channel;
@@ -81,15 +81,17 @@ public class RenderWorker extends Thread {
   @Override
   public void run() {
     while (!interrupted()) {
-      LOGGER.info("Starting");
+      LOGGER.info("Connecting");
       try {
         connect();
+        LOGGER.info("Connected");
+        nextRestartDelaySeconds = 1;
 
         QueueingConsumer consumer = new QueueingConsumer(channel);
         channel.basicQos(1, false); // only fetch <poolSize> tasks at once
         channel.basicConsume("rs_tasks", false, consumer);
 
-        while (!interrupted()) {
+        while (!interrupted() && channel.isOpen()) {
           try {
             Path assignmentPath = jobDirectory.resolve(UUID.randomUUID().toString());
             assignmentPath.toFile().mkdir();
@@ -105,7 +107,7 @@ public class RenderWorker extends Thread {
         LOGGER.error("An error occurred in the worker loop", e);
       }
 
-      if (conn != null) {
+      if (conn != null && conn.isOpen()) {
         try {
           conn.close(5000);
         } catch (IOException e) {
@@ -118,7 +120,7 @@ public class RenderWorker extends Thread {
         try {
           Thread.sleep(nextRestartDelaySeconds * 1000);
           nextRestartDelaySeconds = Math
-              .min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds + 10);
+              .min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds * 2);
         } catch (InterruptedException e) {
           LOGGER.warn("Interrupted while sleeping", e);
           return;
