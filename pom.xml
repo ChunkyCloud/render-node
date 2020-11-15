@@ -50,7 +50,7 @@
         <dependency>
             <groupId>se.llbit</groupId>
             <artifactId>chunky-core</artifactId>
-            <version>2.3.0-5-gd198057d</version>
+            <version>2.3.0-18-g94f81238</version>
         </dependency>
         <dependency>
             <!-- dependency of chunky -->
@@ -138,7 +138,7 @@
                             <repositoryLayout>default</repositoryLayout>
                             <groupId>se.llbit</groupId>
                             <artifactId>chunky-core</artifactId>
-                            <version>2.3.0-5-gd198057d</version>
+                            <version>2.3.0-18-g94f81238</version>
                             <packaging>jar</packaging>
                             <generatePom>true</generatePom>
                         </configuration>
