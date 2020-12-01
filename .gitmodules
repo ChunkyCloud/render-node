@@ -1,0 +1,3 @@
+[submodule "chunky"]
+	path = chunky
+	url = git@github.com:leMaik/chunky.git
