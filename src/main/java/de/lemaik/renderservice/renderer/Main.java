@@ -23,6 +23,7 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import de.lemaik.renderservice.renderer.application.CommandlineArguments;
 import de.lemaik.renderservice.renderer.application.HeadlessRenderer;
 import de.lemaik.renderservice.renderer.application.RendererSettings;
+import java.util.Optional;
 
 /**
  * The main class.
@@ -54,7 +55,8 @@ public class Main {
         arguments.getMasterServer(),
         arguments.getCacheDirectory(),
         arguments.getMaxCacheSize(),
-        arguments.getName()
+        arguments.getName(),
+        Optional.ofNullable(arguments.getApiKey()).orElse(System.getenv("API_KEY"))
     );
     new HeadlessRenderer(settings).start();
   }

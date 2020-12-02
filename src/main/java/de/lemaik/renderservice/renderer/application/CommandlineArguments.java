@@ -19,7 +19,6 @@
 package de.lemaik.renderservice.renderer.application;
 
 import com.lexicalscope.jewel.cli.Option;
-
 import java.io.File;
 
 /**
@@ -86,4 +85,9 @@ public interface CommandlineArguments {
     @Option(longName = "name",
             defaultToNull = true)
     String getName();
+
+    @Option(longName="api-key",
+            description="API Key",
+            defaultToNull = true)
+    String getApiKey();
 }

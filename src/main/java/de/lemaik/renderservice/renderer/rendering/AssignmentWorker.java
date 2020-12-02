@@ -127,7 +127,7 @@ public class AssignmentWorker implements Runnable {
           out.writeUTF(assignment.getJobId());
           out.write(dump);
         }
-        channel.basicPublish("", "rs_dumps", MessageProperties.PERSISTENT_BASIC, bos.toByteArray());
+        channel.basicPublish("rs_dumps", "", MessageProperties.PERSISTENT_BASIC, bos.toByteArray());
       }
 
       channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);

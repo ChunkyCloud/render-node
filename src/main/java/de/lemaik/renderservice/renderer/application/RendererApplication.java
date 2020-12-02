@@ -26,6 +26,8 @@ import de.lemaik.renderservice.renderer.rendering.RenderServiceInfo;
 import de.lemaik.renderservice.renderer.rendering.RenderWorker;
 import de.lemaik.renderservice.renderer.util.MinecraftDownloader;
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -115,8 +117,23 @@ public abstract class RendererApplication {
       return chunky;
     };
 
-    worker = new RenderWorker(rsInfo.getRabbitMq(), getSettings().getThreads().orElse(2),
-        getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory, chunkyWrapperFactory, api);
+    // Construct the proper queue url with username and password from the api key
+    // (username is the first 8 characters of the api key)
+    URI queueUri;
+    try {
+      URI url = new URI(rsInfo.getRabbitMq());
+      queueUri = new URI(
+          url.getScheme() + "://" + settings.getApiKey().substring(0, 8) + ":" + settings
+              .getApiKey() + "@" + url.getHost() + ":" + url.getPort() + url.getPath());
+    } catch (URISyntaxException e) {
+      LOGGER.error("Invalid queue url or api key", e);
+      System.exit(-1);
+      return;
+    }
+
+    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2),
+        getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory,
+        chunkyWrapperFactory, api);
     worker.start();
   }
 

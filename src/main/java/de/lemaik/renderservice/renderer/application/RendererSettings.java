@@ -36,11 +36,12 @@ public class RendererSettings {
     private File cacheDirectory;
     private Long maxCacheSize;
     private String name;
+    private final String apiKey;
 
     public RendererSettings(Integer processes, Integer threads, Integer xms, Integer xmx,
                             File jobPath, File texturepacksPath, Integer maxUploadRate,
                             String masterApiUrl, File cacheDirectory, Long maxCacheSize,
-                            String name) {
+                            String name, String apiKey) {
         this.processes = processes;
         this.threads = threads;
         this.xms = xms;
@@ -52,6 +53,7 @@ public class RendererSettings {
         this.cacheDirectory = cacheDirectory;
         this.maxCacheSize = maxCacheSize;
         this.name = name;
+        this.apiKey = apiKey;
     }
 
     public Optional<Integer> getProcesses() {
@@ -96,5 +98,9 @@ public class RendererSettings {
 
     public Optional<String> getName() {
         return Optional.ofNullable(name);
+    }
+
+    public String getApiKey() {
+        return apiKey;
     }
 }
