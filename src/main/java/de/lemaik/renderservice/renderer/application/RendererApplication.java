@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import org.apache.logging.log4j.LogManager;
@@ -86,8 +87,11 @@ public abstract class RendererApplication {
       LOGGER.info(
           "Downloading Minecraft " + TEXTURE_VERSION + " to " + texturepackPath.getAbsolutePath());
 
-      try (BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))) {
-        sink.writeAll(response.body().source());
+      try (
+          ResponseBody body = response.body();
+          BufferedSink sink = Okio.buffer(Okio.sink(texturepackPath))
+      ) {
+        sink.writeAll(body.source());
       }
     } catch (Exception e) {
       LOGGER.error("Could not download assets", e);

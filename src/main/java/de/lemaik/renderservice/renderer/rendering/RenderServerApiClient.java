@@ -32,6 +32,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 
@@ -62,7 +63,10 @@ public class RenderServerApiClient {
           @Override
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  InputStreamReader reader = new InputStreamReader(body.byteStream())
+              ) {
                 result.complete(gson.fromJson(reader, RenderServiceInfo.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -91,7 +95,10 @@ public class RenderServerApiClient {
           @Override
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  InputStreamReader reader = new InputStreamReader(body.byteStream())
+              ) {
                 result.complete(gson.fromJson(reader, Job.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -119,7 +126,10 @@ public class RenderServerApiClient {
           @Override
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
-              try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
+              try (
+                  ResponseBody body = response.body();
+                  InputStreamReader reader = new InputStreamReader(body.byteStream())
+              ) {
                 result.complete(gson.fromJson(reader, JsonObject.class));
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -167,8 +177,11 @@ public class RenderServerApiClient {
             if (response.code() == 200) {
               File file = new File(targetDir.toFile(), response.header("X-Filename"));
 
-              try (BufferedSink sink = Okio.buffer(Okio.sink(file))) {
-                sink.writeAll(response.body().source());
+              try (
+                  ResponseBody body = response.body();
+                  BufferedSink sink = Okio.buffer(Okio.sink(file))
+              ) {
+                sink.writeAll(body.source());
                 result.complete(file);
               } catch (IOException e) {
                 result.completeExceptionally(e);
@@ -196,8 +209,11 @@ public class RenderServerApiClient {
           @Override
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
-              try (BufferedSink sink = Okio.buffer(Okio.sink(file))) {
-                sink.writeAll(response.body().source());
+              try (
+                  ResponseBody body = response.body();
+                  BufferedSink sink = Okio.buffer(Okio.sink(file))
+              ) {
+                sink.writeAll(body.source());
                 result.complete(file);
               } catch (IOException e) {
                 result.completeExceptionally(e);

@@ -10,6 +10,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * A utility class to download Minecraft jars.
@@ -55,14 +56,16 @@ public class MinecraftDownloader {
 
           @Override
           public void onResponse(Call call, Response response) throws IOException {
-            JsonObject parsed = new JsonParser().parse(response.body().string()).getAsJsonObject();
-            for (JsonElement versionData : parsed.getAsJsonArray("versions")) {
-              if (versionData.getAsJsonObject().get("id").getAsString().equals(version)) {
-                result.complete(versionData.getAsJsonObject().get("url").getAsString());
-                return;
+            try (ResponseBody body = response.body()) {
+              JsonObject parsed = new JsonParser().parse(body.string()).getAsJsonObject();
+              for (JsonElement versionData : parsed.getAsJsonArray("versions")) {
+                if (versionData.getAsJsonObject().get("id").getAsString().equals(version)) {
+                  result.complete(versionData.getAsJsonObject().get("url").getAsString());
+                  return;
+                }
               }
+              result.completeExceptionally(new Exception("Version " + version + " not found"));
             }
-            result.completeExceptionally(new Exception("Version " + version + " not found"));
           }
         });
 
@@ -81,9 +84,12 @@ public class MinecraftDownloader {
 
           @Override
           public void onResponse(Call call, Response response) throws IOException {
-            JsonObject parsed = new JsonParser().parse(response.body().string()).getAsJsonObject();
-            result.complete(parsed.getAsJsonObject("downloads").getAsJsonObject("client").get("url")
-                .getAsString());
+            try (ResponseBody body = response.body()) {
+              JsonObject parsed = new JsonParser().parse(body.string()).getAsJsonObject();
+              result
+                  .complete(parsed.getAsJsonObject("downloads").getAsJsonObject("client").get("url")
+                      .getAsString());
+            }
           }
         });
 
