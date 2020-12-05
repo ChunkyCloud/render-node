@@ -36,6 +36,7 @@ import okio.BufferedSink;
 import okio.Okio;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import se.llbit.chunky.PersistentSettings;
 
 public abstract class RendererApplication {
 
@@ -102,6 +103,12 @@ public abstract class RendererApplication {
       LOGGER.warn("No job path specified, using " + jobDirectory.toString());
     }
     jobDirectory.toFile().mkdirs();
+
+    Path chunkyHome = Paths.get(System.getProperty("user.dir"), "rs_chunky");
+    chunkyHome.toFile().mkdirs();
+    PersistentSettings.changeSettingsDirectory(chunkyHome.toFile());
+    PersistentSettings.setDisableDefaultTextures(true);
+    LOGGER.info("Chunky home set to " + chunkyHome);
 
     if (getSettings().getTexturepacksPath().isPresent()) {
       texturepacksDirectory = getSettings().getTexturepacksPath().get().toPath();
