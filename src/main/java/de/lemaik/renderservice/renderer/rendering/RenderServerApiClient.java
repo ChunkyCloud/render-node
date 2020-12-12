@@ -20,6 +20,7 @@ package de.lemaik.renderservice.renderer.rendering;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import de.lemaik.renderservice.renderer.Main;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,6 +47,10 @@ public class RenderServerApiClient {
     this.baseUrl = baseUrl;
     client = new OkHttpClient.Builder()
         .cache(new Cache(cacheDirectory, maxCacheSize))
+        .addInterceptor(chain -> chain.proceed(
+            chain.request().newBuilder()
+                .header("User-Agent", "ChunkyCloud Render Node v" + Main.VERSION)
+                .build()))
         .build();
   }
 

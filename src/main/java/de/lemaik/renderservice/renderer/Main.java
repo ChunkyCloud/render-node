@@ -30,6 +30,8 @@ import java.util.Optional;
  */
 public class Main {
 
+  public static final int VERSION = 1;
+
   private Main() {
   }
 
