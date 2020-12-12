@@ -24,7 +24,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
-import de.lemaik.renderservice.renderer.chunky.RenderException;
 import de.lemaik.renderservice.renderer.util.FileUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -35,7 +34,6 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -104,17 +102,16 @@ public class AssignmentWorker implements Runnable {
           apiClient.downloadEmittergrid(job, new File(workingDir.toFile(), "scene.emittergrid"))
       ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
-      LOGGER.info("Rendering...");
-
       File texturepack = null;
       if (job.getTexturepack() != null) {
-        texturepack = new File(texturepacksDir.toFile(),
-            job.getTexturepack().replaceAll("[^a-zA-Z0-9-_.]", "") + ".zip");
+        texturepack = new File(texturepacksDir.toFile(), job.getTexturepack() + ".zip");
         if (!texturepack.isFile()) {
-          throw new RenderException("Texturepack not found: " + texturepack.getAbsolutePath());
+          LOGGER.info("Downloading texturepack...");
+          apiClient.downloadResourcepack(job.getTexturepack(), texturepack).get(4, TimeUnit.HOURS);
         }
       }
 
+      LOGGER.info("Rendering...");
       byte[] dump = chunky
           .render(texturepack, new File(workingDir.toFile(), "scene.json"), assignment.getSpp(),
               threads,

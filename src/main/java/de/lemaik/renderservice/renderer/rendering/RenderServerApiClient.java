@@ -195,6 +195,11 @@ public class RenderServerApiClient {
     return result;
   }
 
+
+  public CompletableFuture downloadResourcepack(String name, File file) {
+    return downloadFile(baseUrl + "/resourcepacks/" + name, file);
+  }
+
   private CompletableFuture downloadFile(String url, File file) {
     CompletableFuture<File> result = new CompletableFuture<>();
 
