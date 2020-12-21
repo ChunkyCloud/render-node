@@ -27,6 +27,8 @@ public class Job {
   private List<JobFile> files;
   private String texturepack;
   private boolean cancelled;
+  private boolean pictureOnly;
+  private int targetSpp;
 
   public String getId() {
     return _id;
@@ -70,6 +72,14 @@ public class Job {
 
   public boolean isCancelled() {
     return cancelled;
+  }
+
+  public boolean isPictureOnly() {
+    return pictureOnly;
+  }
+
+  public int getTargetSpp() {
+    return targetSpp;
   }
 
   public class JobFile {

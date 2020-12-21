@@ -278,4 +278,40 @@ public class RenderServerApiClient {
 
     return result;
   }
+
+  public CompletableFuture<Response> postPicture(String jobId, byte[] pngImage, int spp) {
+    CompletableFuture<Response> result = new CompletableFuture<>();
+
+    client.newCall(new Request.Builder()
+        .url(baseUrl + "/jobs/" + jobId + "/latestDump")
+        .post(new MultipartBody.Builder()
+            .setType(MediaType.parse("multipart/form-data"))
+            .addFormDataPart("picture", "scene.png",
+                RequestBody.create(MediaType.parse("image/png"), pngImage))
+            .addFormDataPart("spp", "" + spp)
+            .build())
+        .build()
+    )
+        .enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+            result.completeExceptionally(e);
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) throws IOException {
+            if (response.code() == 204) {
+              result.complete(response);
+            } else if (response.code() == 409) {
+              // picture can't be used as final result
+              result.complete(response);
+            } else {
+              result.completeExceptionally(new IOException(
+                  "Could not post picture " + response.code() + " " + response.body().string()));
+            }
+          }
+        });
+
+    return result;
+  }
 }

@@ -22,8 +22,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.QueueingConsumer;
+import de.lemaik.renderservice.renderer.chunky.ChunkyRenderDump;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
 import de.lemaik.renderservice.renderer.util.FileUtil;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,6 +36,9 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import javax.imageio.ImageIO;
+import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -115,7 +123,29 @@ public class AssignmentWorker implements Runnable {
               100).get();
 
       LOGGER.info("Uploading...");
-      apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
+      if (job.isPictureOnly() && job.getTargetSpp() <= assignment.getSpp()) {
+        LOGGER.info("Dump not needed, uploading picture instead");
+        ChunkyRenderDump renderDump = ChunkyRenderDump
+            .fromStream(new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(dump))));
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+          BufferedImage image = renderDump.getPicture(
+              sceneDescription[0].get("exposure").getAsDouble(),
+              ChunkyRenderDump.Postprocess
+                  .valueOf(sceneDescription[0].get("postprocess").getAsString())
+          );
+          ImageIO.write(image, "png", bos);
+          byte[] picture = bos.toByteArray();
+          try (Response res = apiClient.postPicture(job.getId(), picture, renderDump.getSpp())
+              .get(1, TimeUnit.HOURS)) {
+            if (res.code() == 409) {
+              LOGGER.info("Picture upload rejected, uploading dump instead");
+              apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
+            }
+          }
+        }
+      } else {
+        apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
+      }
 
       channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
       LOGGER.info("Done");
