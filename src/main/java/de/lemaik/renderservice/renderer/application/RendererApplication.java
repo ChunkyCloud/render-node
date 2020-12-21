@@ -58,7 +58,7 @@ public abstract class RendererApplication {
   public RendererApplication(RendererSettings settings) {
     this.settings = settings;
     api = new RenderServerApiClient(
-        settings.getMasterApiUrl(),
+        settings.getMasterApiUrl(), settings.getApiKey(),
         settings.getCacheDirectory()
             .orElse(Paths.get(System.getProperty("user.dir"), "rs_cache").toFile()),
         settings.getMaxCacheSize().orElse(512L)

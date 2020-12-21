@@ -21,12 +21,9 @@ package de.lemaik.renderservice.renderer.rendering;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.MessageProperties;
 import com.rabbitmq.client.QueueingConsumer;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
 import de.lemaik.renderservice.renderer.util.FileUtil;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -118,14 +115,7 @@ public class AssignmentWorker implements Runnable {
               100).get();
 
       LOGGER.info("Uploading...");
-      try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-        // NOTE: GZIPOutputStream must be explicitly closed to finish writing (flushing will not help)
-        try (DataOutputStream out = new DataOutputStream(bos)) {
-          out.writeUTF(assignment.getJobId());
-          out.write(dump);
-        }
-        channel.basicPublish("rs_dumps", "", MessageProperties.PERSISTENT_BASIC, bos.toByteArray());
-      }
+      apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
 
       channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
       LOGGER.info("Done");

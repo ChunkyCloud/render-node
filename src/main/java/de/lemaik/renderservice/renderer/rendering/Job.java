@@ -23,13 +23,13 @@ import java.util.Optional;
 
 public class Job {
 
-  private String id;
+  private String _id;
   private List<JobFile> files;
   private String texturepack;
   private boolean cancelled;
 
   public String getId() {
-    return id;
+    return _id;
   }
 
   public String getSceneUrl() {

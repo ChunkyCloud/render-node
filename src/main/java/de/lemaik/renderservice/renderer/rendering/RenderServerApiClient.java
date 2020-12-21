@@ -30,8 +30,11 @@ import java.util.concurrent.CompletableFuture;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSink;
@@ -43,13 +46,15 @@ public class RenderServerApiClient {
   private final String baseUrl;
   private final OkHttpClient client;
 
-  public RenderServerApiClient(String baseUrl, File cacheDirectory, long maxCacheSize) {
+  public RenderServerApiClient(String baseUrl, String apiKey, File cacheDirectory,
+      long maxCacheSize) {
     this.baseUrl = baseUrl;
     client = new OkHttpClient.Builder()
         .cache(new Cache(cacheDirectory, maxCacheSize))
         .addInterceptor(chain -> chain.proceed(
             chain.request().newBuilder()
                 .header("User-Agent", "ChunkyCloud Render Node v" + Main.VERSION)
+                .header("X-Api-Key", apiKey)
                 .build()))
         .build();
   }
@@ -230,6 +235,43 @@ public class RenderServerApiClient {
               }
             } else {
               result.completeExceptionally(new IOException("Download of " + url + " failed"));
+            }
+          }
+        });
+
+    return result;
+  }
+
+  public CompletableFuture postDump(String jobId, byte[] dump) {
+    CompletableFuture<Response> result = new CompletableFuture<>();
+
+    MultipartBody.Builder body = new MultipartBody.Builder()
+        .setType(MediaType.parse("multipart/form-data"))
+        .addFormDataPart("dump", "scene.dump",
+            RequestBody.create(MediaType.parse("application/octet-stream"), dump));
+
+    client.newCall(new Request.Builder()
+        .url(baseUrl + "/jobs/" + jobId + "/dumps")
+        .post(body.build())
+        .build()
+    )
+        .enqueue(new Callback() {
+          @Override
+          public void onFailure(Call call, IOException e) {
+            result.completeExceptionally(e);
+          }
+
+          @Override
+          public void onResponse(Call call, Response response) throws IOException {
+            try {
+              if (response.code() == 204) {
+                result.complete(response);
+              } else {
+                result.completeExceptionally(new IOException(
+                    "Could not send dump: " + response.code() + " " + response.body().string()));
+              }
+            } finally {
+              response.close();
             }
           }
         });
