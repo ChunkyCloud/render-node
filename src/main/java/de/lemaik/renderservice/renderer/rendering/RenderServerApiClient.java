@@ -232,6 +232,7 @@ public class RenderServerApiClient {
   }
 
   private CompletableFuture downloadFile(String url, File file) {
+    File tmpFile = new File(file.getAbsolutePath() + ".tmp");
     CompletableFuture<File> result = new CompletableFuture<>();
 
     client.newCall(new Request.Builder()
@@ -250,8 +251,24 @@ public class RenderServerApiClient {
                   BufferedSink sink = Okio.buffer(Okio.sink(file))
               ) {
                 sink.writeAll(body.source());
+              } catch (IOException e) {
+                if (tmpFile.exists()) {
+                  try {
+                    tmpFile.delete();
+                  } catch (e) { }
+                }
+                result.completeExceptionally(e);
+                return;
+              }
+              try {
+                if (!tmpFile.renameTo(file)) {
+                  throw new IOException("Could not rename file " + tmpFile + " to " + file);
+                }
                 result.complete(file);
               } catch (IOException e) {
+                if (tmpFile.exists()) {
+                  tmpFile.delete();
+                }
                 result.completeExceptionally(e);
               }
             } else {
