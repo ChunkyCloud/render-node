@@ -248,14 +248,12 @@ public class RenderServerApiClient {
             if (response.code() == 200) {
               try (
                   ResponseBody body = response.body();
-                  BufferedSink sink = Okio.buffer(Okio.sink(file))
+                  BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
               ) {
                 sink.writeAll(body.source());
               } catch (IOException e) {
                 if (tmpFile.exists()) {
-                  try {
-                    tmpFile.delete();
-                  } catch (e) { }
+                  tmpFile.delete();
                 }
                 result.completeExceptionally(e);
                 return;
