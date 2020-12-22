@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -45,6 +46,7 @@ public class RenderServerApiClient {
   private static final Gson gson = new Gson();
   private final String baseUrl;
   private final OkHttpClient client;
+  private final OkHttpClient uploadClient;
 
   public RenderServerApiClient(String baseUrl, String apiKey, File cacheDirectory,
       long maxCacheSize) {
@@ -57,6 +59,24 @@ public class RenderServerApiClient {
                     "ChunkyCloud Render Node v" + Main.VERSION + ", API " + Main.API_VERSION)
                 .header("X-Api-Key", apiKey)
                 .build()))
+        .connectTimeout(
+            Integer.parseInt(System.getProperty("chunkycloud.http.connectTimeout", "10")),
+            TimeUnit.SECONDS)
+        .writeTimeout(Integer.parseInt(System.getProperty("chunkycloud.http.writeTimeout", "10")),
+            TimeUnit.SECONDS)
+        .readTimeout(Integer.parseInt(System.getProperty("chunkycloud.http.readTimeout", "10")),
+            TimeUnit.SECONDS)
+        .build();
+    uploadClient = client.newBuilder()
+        .connectTimeout(
+            Integer.parseInt(System.getProperty("chunkycloud.http.uploadConnectTimeout", "10")),
+            TimeUnit.SECONDS)
+        .writeTimeout(
+            Integer.parseInt(System.getProperty("chunkycloud.http.uploadWriteTimeout", "1800")),
+            TimeUnit.SECONDS)
+        .readTimeout(
+            Integer.parseInt(System.getProperty("chunkycloud.http.uploadReadTimeout", "1800")),
+            TimeUnit.SECONDS)
         .build();
   }
 
@@ -251,7 +271,7 @@ public class RenderServerApiClient {
         .addFormDataPart("dump", "scene.dump",
             RequestBody.create(MediaType.parse("application/octet-stream"), dump));
 
-    client.newCall(new Request.Builder()
+    uploadClient.newCall(new Request.Builder()
         .url(baseUrl + "/jobs/" + jobId + "/dumps")
         .post(body.build())
         .build()
@@ -283,7 +303,7 @@ public class RenderServerApiClient {
   public CompletableFuture<Response> postPicture(String jobId, byte[] pngImage, int spp) {
     CompletableFuture<Response> result = new CompletableFuture<>();
 
-    client.newCall(new Request.Builder()
+    uploadClient.newCall(new Request.Builder()
         .url(baseUrl + "/jobs/" + jobId + "/latestDump")
         .post(new MultipartBody.Builder()
             .setType(MediaType.parse("multipart/form-data"))
