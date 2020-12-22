@@ -53,7 +53,8 @@ public class RenderServerApiClient {
         .cache(new Cache(cacheDirectory, maxCacheSize))
         .addInterceptor(chain -> chain.proceed(
             chain.request().newBuilder()
-                .header("User-Agent", "ChunkyCloud Render Node v" + Main.VERSION)
+                .header("User-Agent",
+                    "ChunkyCloud Render Node v" + Main.VERSION + ", API " + Main.API_VERSION)
                 .header("X-Api-Key", apiKey)
                 .build()))
         .build();
