@@ -135,7 +135,15 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
-              result.completeExceptionally(new IOException("The job could not be downloaded"));
+              try {
+                if (response.code() == 404 && response.body().string().contains("Job not found")) {
+                  result.complete(null);
+                } else {
+                  result.completeExceptionally(new IOException("The job could not be downloaded"));
+                }
+              } catch (IOException e) {
+                result.completeExceptionally(new IOException("The job could not be downloaded", e));
+              }
             }
           }
         });
