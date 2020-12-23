@@ -30,7 +30,7 @@ import java.util.Optional;
  */
 public class Main {
 
-  public static final String VERSION = "1.2.0";
+  public static final String VERSION = Main.class.getPackage().getImplementationVersion();
   public static final int API_VERSION = 1;
 
   private Main() {
