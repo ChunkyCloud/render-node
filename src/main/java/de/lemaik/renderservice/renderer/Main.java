@@ -48,7 +48,7 @@ public class Main {
     }
 
     RendererSettings settings = new RendererSettings(
-        arguments.getProcesses(),
+        arguments.getCpuLoad(),
         arguments.getThreads(),
         arguments.getXms(),
         arguments.getXmx(),

@@ -48,6 +48,7 @@ public class RenderWorker extends Thread {
   private final Path texturepacksDirectory;
   private final ChunkyWrapperFactory chunkyFactory;
   private final int threads;
+  private final int cpuLoad;
   private final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
   private final RenderServerApiClient apiClient;
   private int nextRestartDelaySeconds = 1;
@@ -55,10 +56,10 @@ public class RenderWorker extends Thread {
   private Connection conn;
   private Channel channel;
 
-  public RenderWorker(String uri, int threads, String name, Path jobDirectory,
-      Path texturepacksDirectory,
-      ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
+  public RenderWorker(String uri, int threads, int cpuLoad, String name, Path jobDirectory,
+      Path texturepacksDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
     this.threads = threads;
+    this.cpuLoad = cpuLoad;
     this.texturepacksDirectory = texturepacksDirectory;
     executorService = Executors.newFixedThreadPool(1);
     this.jobDirectory = jobDirectory;
@@ -99,7 +100,7 @@ public class RenderWorker extends Thread {
             taskPath.toFile().mkdir();
             executorService.submit(
                 new TaskWorker(consumer.nextDelivery(), channel, taskPath,
-                    texturepacksDirectory, threads, chunkyFactory.getChunkyInstance(), apiClient));
+                    texturepacksDirectory, threads, cpuLoad, chunkyFactory.getChunkyInstance(), apiClient));
           } catch (InterruptedException e) {
             LOGGER.info("Worker loop interrupted", e);
             break;

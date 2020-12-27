@@ -30,11 +30,10 @@ public interface CommandlineArguments {
             defaultValue = "false")
     boolean getHeadless();
 
-    @Option(shortName = "p",
-            longName = "process-count",
-            description = "Number of renderer processes",
-            defaultValue = "1")
-    int getProcesses();
+    @Option(longName = "cpu-load",
+            description = "Maximum CPU load",
+            defaultValue = "100")
+    int getCpuLoad();
 
     @Option(shortName = "t",
             longName = "thread-count",

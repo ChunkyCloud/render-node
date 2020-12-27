@@ -142,7 +142,7 @@ public abstract class RendererApplication {
       return;
     }
 
-    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2),
+    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2), getSettings().getCpuLoad().orElse(100),
         getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory,
         chunkyWrapperFactory, api);
     worker.start();

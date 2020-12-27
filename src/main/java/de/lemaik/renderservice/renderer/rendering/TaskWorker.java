@@ -52,16 +52,19 @@ public class TaskWorker implements Runnable {
   private final Path workingDir;
   private final Path texturepacksDir;
   private final int threads;
+  private final int cpuLoad;
   private final ChunkyWrapper chunky;
   private final RenderServerApiClient apiClient;
 
   public TaskWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
-      Path texturepacksDir, int threads, ChunkyWrapper chunky, RenderServerApiClient apiClient) {
+      Path texturepacksDir, int threads, int cpuLoad, ChunkyWrapper chunky,
+      RenderServerApiClient apiClient) {
     this.delivery = delivery;
     this.channel = channel;
     this.workingDir = workingDir;
     this.texturepacksDir = texturepacksDir;
     this.threads = threads;
+    this.cpuLoad = cpuLoad;
     this.chunky = chunky;
     this.apiClient = apiClient;
   }
@@ -125,7 +128,7 @@ public class TaskWorker implements Runnable {
       byte[] dump = chunky
           .render(texturepack, new File(workingDir.toFile(), "scene.json"), task.getSpp(),
               threads,
-              100).get();
+              cpuLoad).get();
 
       LOGGER.info("Uploading...");
       if (job.isPictureOnly() && job.getTargetSpp() <= task.getSpp()) {
