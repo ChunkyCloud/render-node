@@ -95,10 +95,10 @@ public class RenderWorker extends Thread {
 
         while (!interrupted() && channel.isOpen()) {
           try {
-            Path assignmentPath = jobDirectory.resolve(UUID.randomUUID().toString());
-            assignmentPath.toFile().mkdir();
+            Path taskPath = jobDirectory.resolve(UUID.randomUUID().toString());
+            taskPath.toFile().mkdir();
             executorService.submit(
-                new AssignmentWorker(consumer.nextDelivery(), channel, assignmentPath,
+                new TaskWorker(consumer.nextDelivery(), channel, taskPath,
                     texturepacksDirectory, threads, chunkyFactory.getChunkyInstance(), apiClient));
           } catch (InterruptedException e) {
             LOGGER.info("Worker loop interrupted", e);

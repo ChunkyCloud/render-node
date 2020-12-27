@@ -42,9 +42,9 @@ import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AssignmentWorker implements Runnable {
+public class TaskWorker implements Runnable {
 
-  private static final Logger LOGGER = LogManager.getLogger(AssignmentWorker.class);
+  private static final Logger LOGGER = LogManager.getLogger(TaskWorker.class);
   private static final Gson gson = new Gson();
 
   private final QueueingConsumer.Delivery delivery;
@@ -55,7 +55,7 @@ public class AssignmentWorker implements Runnable {
   private final ChunkyWrapper chunky;
   private final RenderServerApiClient apiClient;
 
-  public AssignmentWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
+  public TaskWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
       Path texturepacksDir, int threads, ChunkyWrapper chunky, RenderServerApiClient apiClient) {
     this.delivery = delivery;
     this.channel = channel;
@@ -69,18 +69,18 @@ public class AssignmentWorker implements Runnable {
   @Override
   public void run() {
     try {
-      Assignment assignment = gson
-          .fromJson(new String(delivery.getBody(), "UTF-8"), Assignment.class);
+      Task task = gson
+          .fromJson(new String(delivery.getBody(), "UTF-8"), Task.class);
       LOGGER.info(String
-          .format("New assignment: %d spp for job %s", assignment.getSpp(), assignment.getJobId()));
-      Job job = apiClient.getJob(assignment.getJobId()).get(10, TimeUnit.MINUTES);
+          .format("New task: %d spp for job %s", task.getSpp(), task.getJobId()));
+      Job job = apiClient.getJob(task.getJobId()).get(10, TimeUnit.MINUTES);
       if (job == null) {
-        LOGGER.info("Job was deleted, skipping and removing it from the queue");
+        LOGGER.info("Job was deleted, skipping the task and removing it from the queue");
         channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         return;
       }
       if (job.isCancelled()) {
-        LOGGER.info("Job is cancelled, skipping and removing it from the queue");
+        LOGGER.info("Job is cancelled, skipping the task and removing it from the queue");
         channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         return;
       }
@@ -123,12 +123,12 @@ public class AssignmentWorker implements Runnable {
 
       LOGGER.info("Rendering...");
       byte[] dump = chunky
-          .render(texturepack, new File(workingDir.toFile(), "scene.json"), assignment.getSpp(),
+          .render(texturepack, new File(workingDir.toFile(), "scene.json"), task.getSpp(),
               threads,
               100).get();
 
       LOGGER.info("Uploading...");
-      if (job.isPictureOnly() && job.getTargetSpp() <= assignment.getSpp()) {
+      if (job.isPictureOnly() && job.getTargetSpp() <= task.getSpp()) {
         LOGGER.info("Dump not needed, uploading picture instead");
         ChunkyRenderDump renderDump = ChunkyRenderDump
             .fromStream(new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(dump))));

@@ -18,7 +18,7 @@
 
 package de.lemaik.renderservice.renderer.rendering;
 
-public class Assignment {
+public class Task {
     private String jobId;
     private int spp;
 
