@@ -45,6 +45,7 @@ public class EmbeddedChunkyWrapper implements ChunkyWrapper {
     CompletableFuture<byte[]> result = new CompletableFuture<>();
 
     context.setRenderThreadCount(threads);
+    context.setSppPerPass(targetSpp); // render in a single pass for minimal overhead
     RenderManager renderer = new RenderManager(context, true);
     renderer.setCPULoad(cpuLoad);
 

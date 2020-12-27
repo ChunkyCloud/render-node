@@ -67,6 +67,10 @@ public class FileBufferRenderContext extends RenderContext {
     config.renderThreads = threads;
   }
 
+  public void setSppPerPass(int sppPerPass) {
+    config.sppPerPass = sppPerPass;
+  }
+
   public byte[] getDump() {
     return dump.toByteArray();
   }
