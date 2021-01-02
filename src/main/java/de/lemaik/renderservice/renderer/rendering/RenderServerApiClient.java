@@ -75,7 +75,7 @@ public class RenderServerApiClient {
             Integer.parseInt(System.getProperty("chunkycloud.http.uploadWriteTimeout", "1800")),
             TimeUnit.SECONDS)
         .readTimeout(
-            Integer.parseInt(System.getProperty("chunkycloud.http.uploadReadTimeout", "1800")),
+            Integer.parseInt(System.getProperty("chunkycloud.http.uploadReadTimeout", "10")),
             TimeUnit.SECONDS)
         .build();
   }
@@ -135,8 +135,8 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
-              try {
-                if (response.code() == 404 && response.body().string().contains("Job not found")) {
+              try (ResponseBody body = response.body()) {
+                if (response.code() == 404 && body.string().contains("Job not found")) {
                   result.complete(null);
                 } else {
                   result.completeExceptionally(new IOException("The job could not be downloaded"));
@@ -233,7 +233,6 @@ public class RenderServerApiClient {
 
     return result;
   }
-
 
   public CompletableFuture downloadResourcepack(String name, File file) {
     return downloadFile(baseUrl + "/resourcepacks/" + name, file);
