@@ -24,7 +24,7 @@
 
     <groupId>de.lemaik.chunkycloud</groupId>
     <artifactId>rendernode</artifactId>
-    <version>1.3.2</version>
+    <version>1.3.3</version>
 
     <licenses>
         <license>
@@ -37,7 +37,7 @@
         <jdk.version>1.8</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <chunky.version>2.3.0-50-ged5240fb</chunky.version>
+        <chunky.version>2.3.0-60-g7b227a80</chunky.version>
     </properties>
 
     <repositories>
