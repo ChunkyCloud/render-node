@@ -103,6 +103,7 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
+              response.close();
               result.completeExceptionally(
                   new IOException("The render service info could not be downloaded"));
             }
@@ -174,6 +175,7 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
+              response.close();
               result.completeExceptionally(new IOException("The scene could not be downloaded"));
             }
           }
@@ -241,6 +243,7 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
+              response.close();
               result.completeExceptionally(new IOException("Download of " + url + " failed"));
             }
           }
@@ -292,6 +295,7 @@ public class RenderServerApiClient {
                 result.completeExceptionally(e);
               }
             } else {
+              response.close();
               result.completeExceptionally(new IOException("Download of " + url + " failed"));
             }
           }
@@ -358,14 +362,18 @@ public class RenderServerApiClient {
 
           @Override
           public void onResponse(Call call, Response response) throws IOException {
-            if (response.code() == 204) {
-              result.complete(response);
-            } else if (response.code() == 409) {
-              // picture can't be used as final result
-              result.complete(response);
-            } else {
-              result.completeExceptionally(new IOException(
-                  "Could not post picture " + response.code() + " " + response.body().string()));
+            try {
+              if (response.code() == 204) {
+                result.complete(response);
+              } else if (response.code() == 409) {
+                // picture can't be used as final result
+                result.complete(response);
+              } else {
+                result.completeExceptionally(new IOException(
+                    "Could not post picture " + response.code() + " " + response.body().string()));
+              }
+            } finally {
+              response.close();
             }
           }
         });
