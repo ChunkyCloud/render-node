@@ -215,14 +215,29 @@ public class RenderServerApiClient {
           public void onResponse(Call call, Response response) {
             if (response.code() == 200) {
               File file = new File(targetDir.toFile(), response.header("X-Filename"));
+              File tmpFile = new File(file.getAbsolutePath() + ".tmp");
 
               try (
                   ResponseBody body = response.body();
-                  BufferedSink sink = Okio.buffer(Okio.sink(file))
+                  BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
               ) {
                 sink.writeAll(body.source());
+              } catch (IOException e) {
+                if (tmpFile.exists()) {
+                  tmpFile.delete();
+                }
+                result.completeExceptionally(e);
+                return;
+              }
+              try {
+                if (!tmpFile.renameTo(file)) {
+                  throw new IOException("Could not rename file " + tmpFile + " to " + file);
+                }
                 result.complete(file);
               } catch (IOException e) {
+                if (tmpFile.exists()) {
+                  tmpFile.delete();
+                }
                 result.completeExceptionally(e);
               }
             } else {
