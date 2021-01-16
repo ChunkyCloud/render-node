@@ -23,7 +23,11 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import de.lemaik.renderservice.renderer.application.CommandlineArguments;
 import de.lemaik.renderservice.renderer.application.HeadlessRenderer;
 import de.lemaik.renderservice.renderer.application.RendererSettings;
+import de.lemaik.renderservice.renderer.chunky.FilteringLogReceiver;
+import de.lemaik.renderservice.renderer.chunky.Log4jLogReceiver;
 import java.util.Optional;
+import se.llbit.log.Level;
+import se.llbit.log.Log;
 
 /**
  * The main class.
@@ -32,6 +36,10 @@ public class Main {
 
   public static final String VERSION = Main.class.getPackage().getImplementationVersion();
   public static final int API_VERSION = 1;
+
+  static {
+    Log.setReceiver(new FilteringLogReceiver(new Log4jLogReceiver()), Level.ERROR, Level.WARNING, Level.INFO);
+  }
 
   private Main() {
   }

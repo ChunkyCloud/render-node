@@ -104,22 +104,22 @@ public abstract class RendererApplication {
       jobDirectory = getSettings().getJobPath().get().toPath();
     } else {
       jobDirectory = Paths.get(System.getProperty("user.dir"), "rs_jobs");
-      LOGGER.warn("No job path specified, using " + jobDirectory.toString());
     }
+    LOGGER.info("Job path: " + jobDirectory.toString());
     jobDirectory.toFile().mkdirs();
 
     Path chunkyHome = Paths.get(System.getProperty("user.dir"), "rs_chunky");
     chunkyHome.toFile().mkdirs();
     PersistentSettings.changeSettingsDirectory(chunkyHome.toFile());
     PersistentSettings.setDisableDefaultTextures(true);
-    LOGGER.info("Chunky home set to " + chunkyHome);
+    LOGGER.info("Chunky home: " + chunkyHome);
 
     if (getSettings().getTexturepacksPath().isPresent()) {
       texturepacksDirectory = getSettings().getTexturepacksPath().get().toPath();
     } else {
       texturepacksDirectory = Paths.get(System.getProperty("user.dir"), "rs_texturepacks");
-      LOGGER.warn("No texturepacks path specified, using " + texturepacksDirectory.toString());
     }
+    LOGGER.info("Resourcepacks path: " + texturepacksDirectory.toString());
     texturepacksDirectory.toFile().mkdirs();
 
     chunkyWrapperFactory = () -> {
@@ -142,7 +142,8 @@ public abstract class RendererApplication {
       return;
     }
 
-    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2), getSettings().getCpuLoad().orElse(100),
+    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2),
+        getSettings().getCpuLoad().orElse(100),
         getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory,
         chunkyWrapperFactory, api);
     worker.start();
