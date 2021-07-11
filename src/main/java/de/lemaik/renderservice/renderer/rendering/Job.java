@@ -28,6 +28,7 @@ public class Job {
   private String texturepack;
   private boolean cancelled;
   private boolean pictureOnly;
+  private int spp;
   private int targetSpp;
 
   public String getId() {
@@ -76,6 +77,10 @@ public class Job {
 
   public boolean isPictureOnly() {
     return pictureOnly;
+  }
+
+  public int getSpp() {
+    return spp;
   }
 
   public int getTargetSpp() {

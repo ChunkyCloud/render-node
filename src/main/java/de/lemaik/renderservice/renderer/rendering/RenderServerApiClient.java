@@ -326,7 +326,7 @@ public class RenderServerApiClient {
           @Override
           public void onResponse(Call call, Response response) throws IOException {
             try {
-              if (response.code() == 204) {
+              if (response.code() == 204 || response.code() == 201) {
                 result.complete(response);
               } else {
                 result.completeExceptionally(new IOException(

@@ -74,8 +74,7 @@ public class TaskWorker implements Runnable {
     try {
       Task task = gson
           .fromJson(new String(delivery.getBody(), "UTF-8"), Task.class);
-      LOGGER.info(String
-          .format("New task: %d spp for job %s", task.getSpp(), task.getJobId()));
+      LOGGER.info("New task: {} spp for job {}", task.getSpp(), task.getJobId());
       Job job = apiClient.getJob(task.getJobId()).get(10, TimeUnit.MINUTES);
       if (job == null) {
         LOGGER.info("Job was deleted, skipping the task and removing it from the queue");
@@ -84,6 +83,13 @@ public class TaskWorker implements Runnable {
       }
       if (job.isCancelled()) {
         LOGGER.info("Job is cancelled, skipping the task and removing it from the queue");
+        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+        return;
+      }
+      if (job.getSpp() >= job.getTargetSpp()) {
+        LOGGER.info(
+            "Job is effectively finished ({} of {} spp), skipping the task and removing it from the queue",
+            job.getSpp(), job.getTargetSpp());
         channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         return;
       }
