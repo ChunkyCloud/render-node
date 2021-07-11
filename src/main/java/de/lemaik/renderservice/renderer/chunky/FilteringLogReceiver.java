@@ -40,6 +40,10 @@ public class FilteringLogReceiver extends Receiver {
       // this is intended; the render node is not supposed to use any local settings
       return false;
     }
-    return false;
+    if (message.startsWith("Render dump not found:")) {
+      // happens if the spp in the scene description is not 0 (see #7); the render node intentionally never loads dumps
+      return false;
+    }
+    return true;
   }
 }
