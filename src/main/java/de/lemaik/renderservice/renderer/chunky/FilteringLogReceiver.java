@@ -13,32 +13,32 @@ public class FilteringLogReceiver extends Receiver {
 
   @Override
   public void logEvent(Level level, String message) {
-    if (!this.ignoreMessage(level, message, null)) {
+    if (this.shouldLogMessage(level, message, null)) {
       receiver.logEvent(level, message, null);
     }
   }
 
   @Override
   public void logEvent(Level level, String message, Throwable thrown) {
-    if (!this.ignoreMessage(level, message, thrown)) {
+    if (this.shouldLogMessage(level, message, thrown)) {
       receiver.logEvent(level, message, thrown);
     }
   }
 
   @Override
   public void logEvent(Level level, Throwable thrown) {
-    if (!this.ignoreMessage(level, null, thrown)) {
+    if (this.shouldLogMessage(level, null, thrown)) {
       receiver.logEvent(level, thrown);
     }
   }
 
-  protected boolean ignoreMessage(Level level, String message, Throwable thrown) {
+  protected boolean shouldLogMessage(Level level, String message, Throwable thrown) {
     if (message == null) {
-      return false;
+      return true;
     }
     if (message.startsWith("Warning: Could not load settings from")) {
       // this is intended; the render node is not supposed to use any local settings
-      return true;
+      return false;
     }
     return false;
   }
