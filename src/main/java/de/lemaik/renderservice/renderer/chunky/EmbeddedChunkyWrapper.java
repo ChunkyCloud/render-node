@@ -1,16 +1,17 @@
 package de.lemaik.renderservice.renderer.chunky;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
-import se.llbit.chunky.renderer.RenderManager;
-import se.llbit.chunky.renderer.RenderStatus;
-import se.llbit.chunky.renderer.SnapshotControl;
+import java.util.zip.GZIPOutputStream;
+
+import se.llbit.chunky.renderer.*;
+import se.llbit.chunky.renderer.postprocessing.PostProcessingFilters;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
 import se.llbit.chunky.resources.TexturePackLoader;
+import se.llbit.log.Log;
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
@@ -46,7 +47,7 @@ public class EmbeddedChunkyWrapper implements ChunkyWrapper {
 
     context.setRenderThreadCount(threads);
     context.setSppPerPass(targetSpp); // render in a single pass for minimal overhead
-    RenderManager renderer = new RenderManager(context, true);
+    RenderManager renderer = new DefaultRenderManager(context, true);
     renderer.setCPULoad(cpuLoad);
 
     SynchronousSceneManager sceneManager = new SynchronousSceneManager(context, renderer);
@@ -69,26 +70,47 @@ public class EmbeddedChunkyWrapper implements ChunkyWrapper {
       }
     });
 
-    renderer.setOnRenderCompleted((time, sps) -> {
-      RenderStatus status = renderer.getRenderStatus();
-      Scene renderedScene = sceneManager.getScene();
-      renderedScene.renderTime = status.getRenderTime();
-      renderedScene.spp = status.getSpp();
-      renderedScene.saveDump(context, new TaskTracker(ProgressListener.NONE));
-      result.complete(context.getDump());
-    });
-
     try {
+      sceneManager.getScene().setPostprocess(PostProcessingFilters.NONE);
       sceneManager.getScene().setTargetSpp(targetSpp);
       sceneManager.getScene().startHeadlessRender();
       renderer.start();
       renderer.join();
       renderer.shutdown();
+
+      RenderStatus status = renderer.getRenderStatus();
+      Scene renderedScene = sceneManager.getScene();
+      renderedScene.renderTime = status.getRenderTime();
+      renderedScene.spp = status.getSpp();
+      saveDumpClassic(context, renderedScene);
+      result.complete(context.getDump());
     } catch (InterruptedException e) {
       result.completeExceptionally(new RenderException("Rendering failed", e));
     }
 
     return result;
+  }
+
+  private static void saveDumpClassic(RenderContext context, Scene scene) {
+    String fileName = scene.name + ".dump";
+    double[] samples = scene.getSampleBuffer();
+    try (DataOutputStream out =
+                 new DataOutputStream(new GZIPOutputStream(context.getSceneFileOutputStream(fileName)))) {
+      out.writeInt(scene.width);
+      out.writeInt(scene.height);
+      out.writeInt(scene.spp);
+      out.writeLong(scene.renderTime);
+      for (int x = 0 ; x < scene.width; x++) {
+        for (int y = 0; y < scene.height; y++) {
+          int offset = (y * scene.width + x) * 3;
+          for (int i = 0; i < 3; i++) {
+            out.writeDouble(samples[offset + i]);
+          }
+        }
+      }
+    } catch (IOException e) {
+      Log.warn("IO Exception while saving render dump!", e);
+    }
   }
 
   @Override
