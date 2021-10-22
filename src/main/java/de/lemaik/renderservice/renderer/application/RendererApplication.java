@@ -41,8 +41,8 @@ import se.llbit.chunky.PersistentSettings;
 
 public abstract class RendererApplication {
 
-  private static final int VERSION = 2;
-  private static final String TEXTURE_VERSION = "1.16.4";
+  private static final int VERSION = 3;
+  private static final String TEXTURE_VERSION = "1.17.1";
   private static final Logger LOGGER = LogManager.getLogger(RendererApplication.class);
 
   private final RenderServerApiClient api;
