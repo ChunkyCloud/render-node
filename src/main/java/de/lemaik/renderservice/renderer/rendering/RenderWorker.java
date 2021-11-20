@@ -43,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 public class RenderWorker extends Thread {
 
   private static final Logger LOGGER = LogManager.getLogger(RenderWorker.class);
+  private static final String QUEUE_NAME = "rs_tasks_241";
   private final ExecutorService executorService;
   private final Path jobDirectory;
   private final Path texturepacksDirectory;
@@ -57,7 +58,8 @@ public class RenderWorker extends Thread {
   private Channel channel;
 
   public RenderWorker(String uri, int threads, int cpuLoad, String name, Path jobDirectory,
-      Path texturepacksDirectory, ChunkyWrapperFactory chunkyFactory, RenderServerApiClient apiClient) {
+      Path texturepacksDirectory, ChunkyWrapperFactory chunkyFactory,
+      RenderServerApiClient apiClient) {
     this.threads = threads;
     this.cpuLoad = cpuLoad;
     this.texturepacksDirectory = texturepacksDirectory;
@@ -92,7 +94,7 @@ public class RenderWorker extends Thread {
 
         QueueingConsumer consumer = new QueueingConsumer(channel);
         channel.basicQos(1, false); // only fetch <poolSize> tasks at once
-        channel.basicConsume("rs_tasks_241", false, consumer);
+        channel.basicConsume(QUEUE_NAME, false, consumer);
 
         while (!interrupted() && channel.isOpen()) {
           try {
@@ -100,7 +102,8 @@ public class RenderWorker extends Thread {
             taskPath.toFile().mkdir();
             executorService.submit(
                 new TaskWorker(consumer.nextDelivery(), channel, taskPath,
-                    texturepacksDirectory, threads, cpuLoad, chunkyFactory.getChunkyInstance(), apiClient));
+                    texturepacksDirectory, threads, cpuLoad, chunkyFactory.getChunkyInstance(),
+                    apiClient));
           } catch (InterruptedException e) {
             LOGGER.info("Worker loop interrupted", e);
             break;
