@@ -18,9 +18,18 @@
 
 package de.lemaik.renderservice.renderer.rendering;
 
+import de.lemaik.renderservice.renderer.message.TaskMessage;
+
 public class Task {
     private String jobId;
     private int spp;
+
+    public static Task fromMessage(TaskMessage message) {
+        Task task = new Task();
+        task.jobId = message.getJobId();
+        task.spp = message.getSpp();
+        return task;
+    }
 
     public String getJobId() {
         return jobId;

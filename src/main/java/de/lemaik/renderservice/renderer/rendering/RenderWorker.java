@@ -18,22 +18,17 @@
 
 package de.lemaik.renderservice.renderer.rendering;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.QueueingConsumer;
-import de.lemaik.renderservice.renderer.Main;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapperFactory;
-import java.io.IOException;
-import java.net.URISyntaxException;
+
+import java.net.URI;
 import java.nio.file.Path;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
+
+import de.lemaik.renderservice.renderer.message.Message;
+import de.lemaik.renderservice.renderer.message.TaskMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,44 +38,32 @@ import org.apache.logging.log4j.Logger;
 public class RenderWorker extends Thread {
 
   private static final Logger LOGGER = LogManager.getLogger(RenderWorker.class);
-  private static final String QUEUE_NAME = "rs_tasks_241";
-  private final ExecutorService executorService;
+  private static final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
+
+  private final String apiKey;
   private final Path jobDirectory;
   private final Path texturepacksDirectory;
   private final ChunkyWrapperFactory chunkyFactory;
   private final int threads;
   private final int cpuLoad;
-  private final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
   private final RenderServerApiClient apiClient;
-  private int nextRestartDelaySeconds = 1;
-  private ConnectionFactory factory;
-  private Connection conn;
-  private Channel channel;
 
-  public RenderWorker(String uri, int threads, int cpuLoad, String name, Path jobDirectory,
-      Path texturepacksDirectory, ChunkyWrapperFactory chunkyFactory,
-      RenderServerApiClient apiClient) {
+  private int nextRestartDelaySeconds = 1;
+
+  private final MessageClient.Factory connectionFactory;
+
+  public RenderWorker(URI uri, String apiKey, int threads, int cpuLoad, String name, Path jobDirectory,
+                      Path texturepacksDirectory, ChunkyWrapperFactory chunkyFactory,
+                      RenderServerApiClient apiClient) {
     this.threads = threads;
     this.cpuLoad = cpuLoad;
     this.texturepacksDirectory = texturepacksDirectory;
-    executorService = Executors.newFixedThreadPool(1);
     this.jobDirectory = jobDirectory;
     this.chunkyFactory = chunkyFactory;
     this.apiClient = apiClient;
-    factory = new ConnectionFactory();
-    try {
-      factory.setUri(uri);
-    } catch (URISyntaxException | NoSuchAlgorithmException | KeyManagementException e) {
-      throw new IllegalArgumentException("Invalid RabbitMQ URI", e);
-    }
+    this.apiKey = apiKey;
 
-    Map<String, Object> connectionProps = factory.getClientProperties();
-    if (name != null) {
-      connectionProps.put("x-rs-name", name);
-    }
-    connectionProps.put("x-rs-threads", threads);
-    connectionProps.put("x-version", Main.VERSION);
-    factory.setClientProperties(connectionProps);
+    connectionFactory = () -> new MessageClient(uri);
   }
 
   @Override
@@ -88,45 +71,30 @@ public class RenderWorker extends Thread {
     while (!interrupted()) {
       LOGGER.info("Connecting");
       try {
-        connect();
-        LOGGER.info("Connected");
-        nextRestartDelaySeconds = 1;
+        MessageClient connection = connectionFactory.connect();
 
-        QueueingConsumer consumer = new QueueingConsumer(channel);
-        channel.basicQos(1, false); // only fetch <poolSize> tasks at once
-        channel.basicConsume(QUEUE_NAME, false, consumer);
-
-        while (!interrupted() && channel.isOpen()) {
+        // Connect
+        if (connection.connectBlocking(30, TimeUnit.SECONDS)) {
           try {
-            Path taskPath = jobDirectory.resolve(UUID.randomUUID().toString());
-            taskPath.toFile().mkdir();
-            executorService.submit(
-                new TaskWorker(consumer.nextDelivery(), channel, taskPath,
-                    texturepacksDirectory, threads, cpuLoad, chunkyFactory.getChunkyInstance(),
-                    apiClient));
-          } catch (InterruptedException e) {
-            LOGGER.info("Worker loop interrupted", e);
-            break;
+            LOGGER.info("Connected");
+            nextRestartDelaySeconds = 1;
+            renderProtocol(connection);
+          } finally {
+            connection.close();
           }
+        } else {
+          LOGGER.info("Timed out while attempting to connect.");
         }
       } catch (Exception e) {
         LOGGER.error("An error occurred in the worker loop", e);
       }
 
-      if (conn != null && conn.isOpen()) {
-        try {
-          conn.close(5000);
-        } catch (IOException e) {
-          LOGGER.error("An error occurred while shutting down", e);
-        }
-      }
-
       if (!interrupted()) {
         LOGGER.info("Waiting " + nextRestartDelaySeconds + " seconds before restarting...");
         try {
-          Thread.sleep(nextRestartDelaySeconds * 1000);
-          nextRestartDelaySeconds = Math
-              .min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds * 2);
+          // noinspection BusyWait
+          Thread.sleep(nextRestartDelaySeconds * 1000L);
+          nextRestartDelaySeconds = Math.min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds * 2);
         } catch (InterruptedException e) {
           LOGGER.warn("Interrupted while sleeping", e);
           return;
@@ -137,12 +105,43 @@ public class RenderWorker extends Thread {
     }
   }
 
-  private void connect() throws IOException {
-    try {
-      conn = factory.newConnection();
-      channel = conn.createChannel();
-    } catch (TimeoutException e) {
-      throw new IOException("Timeout while connecting to RabbitMQ", e);
+  private void renderProtocol(MessageClient connection) throws InterruptedException {
+    Message message;
+
+    // Authenticate
+    message = connection.poll(30, TimeUnit.SECONDS);
+    if (message.getAuthenticationRequest()) {
+      connection.send(Message.authentication(apiKey));
+    } else {
+      throw new RuntimeException("Remote did not ask for authentication message!");
+    }
+
+    while (!interrupted() && connection.isOpen()) {
+      try {
+        Path taskPath = jobDirectory.resolve(UUID.randomUUID().toString());
+        if (!taskPath.toFile().mkdir()) {
+          throw new RuntimeException("Failed to create task folder.");
+        }
+
+        // Ask for a new task
+        connection.send(Message.taskGet());
+
+        // Wait for new task
+        message = connection.poll();
+        TaskMessage task = message.getTask();
+        if (task == null) {
+          if (connection.isClosed()) {
+            return;
+          }
+          throw new RuntimeException("Remote did not send a new task!");
+        }
+
+        // Render the task
+        new TaskWorker(task, connection, taskPath, texturepacksDirectory, threads, cpuLoad, chunkyFactory.getChunkyInstance(), apiClient).run();
+      } catch (InterruptedException e) {
+        LOGGER.info("Worker loop interrupted", e);
+        break;
+      }
     }
   }
 }
