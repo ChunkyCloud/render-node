@@ -1,16 +1,17 @@
 package de.lemaik.renderservice.renderer.chunky;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import se.llbit.log.Level;
 import se.llbit.log.Receiver;
 
 /**
- * An adapter between Log4J and Chunky's logger.
+ * An adapter from Chunky's logger to Slf4J.
  */
-public class Log4jLogReceiver extends Receiver {
+public class Slf4jLogReceiver extends Receiver {
 
-  private static final Logger LOGGER = LogManager.getLogger("Chunky");
+  private static final Logger LOGGER = LoggerFactory.getLogger("Chunky");
 
   @Override
   public void logEvent(Level level, String message) {

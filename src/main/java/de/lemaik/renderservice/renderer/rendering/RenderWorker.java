@@ -24,6 +24,10 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 import de.lemaik.renderservice.renderer.Main;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapperFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -34,15 +38,13 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * A renderer worker thread.
  */
 public class RenderWorker extends Thread {
 
-  private static final Logger LOGGER = LogManager.getLogger(RenderWorker.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RenderWorker.class);
   private static final String QUEUE_NAME = "rs_tasks_241";
   private final ExecutorService executorService;
   private final Path jobDirectory;
