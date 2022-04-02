@@ -9,8 +9,10 @@ public class Message {
 
     private ErrorMessage Error;
     private WarningMessage Warning;
+    private ServerInfoMessage ServerInfo;
     private Object[] AuthenticationRequest;
     private AuthenticationMessage Authentication;
+    private Object[] AuthenticationOk;
     private Object[] TaskGet;
     private TaskMessage Task;
     private Object[] TaskComplete;
@@ -73,6 +75,10 @@ public class Message {
         return m;
     }
 
+    public ServerInfoMessage getServerInfo() {
+        return ServerInfo;
+    }
+
     public boolean getAuthenticationRequest() {
         return AuthenticationRequest != null;
     }
@@ -86,6 +92,10 @@ public class Message {
 
     public AuthenticationMessage getAuthentication() {
         return Authentication;
+    }
+
+    public boolean getAuthenticationOk() {
+        return AuthenticationOk != null;
     }
 
     public static Message taskGet() {

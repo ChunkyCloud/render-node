@@ -39,6 +39,7 @@ public class RenderWorker extends Thread {
 
   private static final Logger LOGGER = LogManager.getLogger(RenderWorker.class);
   private static final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
+  private static final int PROTOCOL_VERSION = 0;
 
   private final String apiKey;
   private final Path jobDirectory;
@@ -108,12 +109,26 @@ public class RenderWorker extends Thread {
   private void renderProtocol(MessageClient connection) throws InterruptedException {
     Message message;
 
+    // Server info
+    message = connection.poll(30, TimeUnit.SECONDS);
+    if (message.getServerInfo() == null || message.getServerInfo().getProtocolVersion() != 0) {
+      throw new RuntimeException("Remote is on an incompatible version!");
+    } else {
+      LOGGER.info(message.toString());
+    }
+
     // Authenticate
     message = connection.poll(30, TimeUnit.SECONDS);
     if (message.getAuthenticationRequest()) {
       connection.send(Message.authentication(apiKey));
     } else {
       throw new RuntimeException("Remote did not ask for authentication message!");
+    }
+
+    // Wait for Ok
+    message = connection.poll(30, TimeUnit.SECONDS);
+    if (!message.getAuthenticationOk()) {
+      throw new RuntimeException("Remote did not respond with authentication success!");
     }
 
     while (!interrupted() && connection.isOpen()) {
