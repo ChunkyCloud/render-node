@@ -132,17 +132,14 @@ public abstract class RendererApplication {
     // (username is the first 8 characters of the api key)
     URI queueUri;
     try {
-      URI url = new URI(rsInfo.getRabbitMq());
-      queueUri = new URI(
-          url.getScheme() + "://" + settings.getApiKey().substring(0, 8) + ":" + settings
-              .getApiKey() + "@" + url.getHost() + ":" + url.getPort() + url.getPath());
+      queueUri = new URI(rsInfo.getWsUrl()).resolve("/rendernode");
     } catch (URISyntaxException e) {
       LOGGER.error("Invalid queue url or api key", e);
       System.exit(-1);
       return;
     }
 
-    worker = new RenderWorker(queueUri.toString(), getSettings().getThreads().orElse(2),
+    worker = new RenderWorker(queueUri, settings.getApiKey(), getSettings().getThreads().orElse(2),
         getSettings().getCpuLoad().orElse(100),
         getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory,
         chunkyWrapperFactory, api);

@@ -20,10 +20,10 @@ package de.lemaik.renderservice.renderer.rendering;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.QueueingConsumer;
 import de.lemaik.renderservice.renderer.chunky.ChunkyRenderDump;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
+import de.lemaik.renderservice.renderer.message.Message;
+import de.lemaik.renderservice.renderer.message.TaskMessage;
 import de.lemaik.renderservice.renderer.util.FileUtil;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -47,8 +47,8 @@ public class TaskWorker implements Runnable {
   private static final Logger LOGGER = LogManager.getLogger(TaskWorker.class);
   private static final Gson gson = new Gson();
 
-  private final QueueingConsumer.Delivery delivery;
-  private final Channel channel;
+  private final TaskMessage task;
+  private final MessageClient connection;
   private final Path workingDir;
   private final Path texturepacksDir;
   private final int threads;
@@ -56,11 +56,11 @@ public class TaskWorker implements Runnable {
   private final ChunkyWrapper chunky;
   private final RenderServerApiClient apiClient;
 
-  public TaskWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
-      Path texturepacksDir, int threads, int cpuLoad, ChunkyWrapper chunky,
-      RenderServerApiClient apiClient) {
-    this.delivery = delivery;
-    this.channel = channel;
+  public TaskWorker(TaskMessage task, MessageClient connection, Path workingDir,
+                    Path texturepacksDir, int threads, int cpuLoad, ChunkyWrapper chunky,
+                    RenderServerApiClient apiClient) {
+    this.task = task;
+    this.connection = connection;
     this.workingDir = workingDir;
     this.texturepacksDir = texturepacksDir;
     this.threads = threads;
@@ -72,25 +72,24 @@ public class TaskWorker implements Runnable {
   @Override
   public void run() {
     try {
-      Task task = gson
-          .fromJson(new String(delivery.getBody(), "UTF-8"), Task.class);
+      Task task = Task.fromMessage(this.task);
       LOGGER.info("New task: {} spp for job {}", task.getSpp(), task.getJobId());
       Job job = apiClient.getJob(task.getJobId()).get(10, TimeUnit.MINUTES);
       if (job == null) {
         LOGGER.info("Job was deleted, skipping the task and removing it from the queue");
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+        connection.send(Message.taskComplete());
         return;
       }
       if (job.isCancelled()) {
         LOGGER.info("Job is cancelled, skipping the task and removing it from the queue");
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+        connection.send(Message.taskComplete());
         return;
       }
       if (job.getSpp() >= job.getTargetSpp()) {
         LOGGER.info(
             "Job is effectively finished ({} of {} spp), skipping the task and removing it from the queue",
             job.getSpp(), job.getTargetSpp());
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+        connection.send(Message.taskComplete());
         return;
       }
 
@@ -161,17 +160,11 @@ public class TaskWorker implements Runnable {
         apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
       }
 
-      channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+      connection.send(Message.taskComplete());
       LOGGER.info("Done");
     } catch (Exception e) {
       LOGGER.warn("An error occurred while processing a task", e);
-      if (channel.isOpen()) {
-        try {
-          channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
-        } catch (IOException e1) {
-          LOGGER.error("Could not nack a failed task", e);
-        }
-      }
+      connection.close();
     } finally {
       FileUtil.deleteDirectory(workingDir.toFile());
     }

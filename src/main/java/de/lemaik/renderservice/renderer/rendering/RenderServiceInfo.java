@@ -21,6 +21,7 @@ package de.lemaik.renderservice.renderer.rendering;
 public class RenderServiceInfo {
     private int version;
     private String rabbitMq;
+    private String wsUrl;
 
     public int getVersion() {
         return version;
@@ -28,5 +29,9 @@ public class RenderServiceInfo {
 
     public String getRabbitMq() {
         return rabbitMq;
+    }
+
+    public String getWsUrl() {
+        return wsUrl;
     }
 }
