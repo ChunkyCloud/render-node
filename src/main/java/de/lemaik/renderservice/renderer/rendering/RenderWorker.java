@@ -111,7 +111,7 @@ public class RenderWorker extends Thread {
 
     // Server info
     message = connection.poll(30, TimeUnit.SECONDS);
-    if (message.getServerInfo() == null || message.getServerInfo().getProtocolVersion() != 0) {
+    if (message.getServerInfo() == null || message.getServerInfo().getProtocolVersion() != PROTOCOL_VERSION) {
       throw new RuntimeException("Remote is on an incompatible version!");
     } else {
       LOGGER.info(message.toString());
