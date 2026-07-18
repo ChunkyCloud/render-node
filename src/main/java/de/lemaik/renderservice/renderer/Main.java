@@ -27,22 +27,22 @@ import de.lemaik.renderservice.renderer.chunky.Slf4jLogReceiver;
 import se.llbit.log.Level;
 import se.llbit.log.Log;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 /**
  * The main class.
  */
 public class Main {
-
     public static final String VERSION;
     public static final int VERSION_CODE = 1;
 
     static {
         String version = Main.class.getPackage().getImplementationVersion();
         VERSION = version == null ? "unknown" : version;
-
-        Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING,
-                Level.INFO);
+        Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING, Level.INFO);
     }
 
     private Main() {
@@ -61,6 +61,14 @@ public class Main {
 
         String apiKey = Optional.ofNullable(arguments.getApiKey()).orElse(System.getenv("API_KEY"));
         if (apiKey == null) {
+            String apiKeyFile = arguments.getApiKeyFile();
+            if (apiKeyFile != null) {
+                try {
+                    apiKey = Files.readString(Path.of(apiKeyFile)).trim();
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to read the API key from " + apiKeyFile, e);
+                }
+            }
             System.err.println(
                     "Missing API key. Use the --api-key option or the API_KEY environment variable to specify one.");
             System.exit(-1);

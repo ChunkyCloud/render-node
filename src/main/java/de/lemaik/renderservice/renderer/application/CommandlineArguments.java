@@ -89,4 +89,9 @@ public interface CommandlineArguments {
             description = "API Key",
             defaultToNull = true)
     String getApiKey();
+
+    @Option(longName = "api-key-file",
+            description = "Path of a file that contains the API Key (e.g. for container secrets)",
+            defaultToNull = true)
+    String getApiKeyFile();
 }
