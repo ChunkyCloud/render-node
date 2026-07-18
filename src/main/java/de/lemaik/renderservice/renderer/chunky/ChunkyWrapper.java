@@ -9,15 +9,12 @@ import se.llbit.chunky.renderer.postprocessing.PostProcessingFilters;
 import se.llbit.chunky.renderer.renderdump.RenderDump;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
-import se.llbit.chunky.resources.ResourcePackLoader;
 import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -27,9 +24,6 @@ public class ChunkyWrapper {
     private final SynchronousSceneManager sceneManager;
     private final DefaultRenderManager renderer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    private File defaultTexturepack;
-    private File previousTexturepack;
 
     public ChunkyWrapper(int threads, int cpuLoad) {
         context = new VoidRenderContext();
@@ -51,22 +45,7 @@ public class ChunkyWrapper {
         });
     }
 
-    public void loadScene(File texturepack, File scene) throws IOException {
-        if (texturepack == null) {
-            texturepack = defaultTexturepack;
-        }
-
-        // all chunky instances share their texturepacks statically
-        if (!texturepack.equals(previousTexturepack)) {
-            if (texturepack.equals(defaultTexturepack)) {
-                ResourcePackLoader.loadResourcePacks(Collections.singletonList(defaultTexturepack));
-            } else {
-                // load the selected texturepack and the default texturepack as fallback
-                ResourcePackLoader.loadResourcePacks(Arrays.asList(texturepack, defaultTexturepack));
-            }
-            previousTexturepack = texturepack;
-        }
-
+    public void loadScene(File scene) throws IOException {
         context.setSceneDirectory(scene.getParentFile());
         sceneManager.getScene()
                 .loadScene(context,
@@ -104,10 +83,6 @@ public class ChunkyWrapper {
                 }
             };
         });
-    }
-
-    public void setDefaultTexturepack(File texturepackPath) {
-        this.defaultTexturepack = texturepackPath;
     }
 
     public int getCurrentSpp() {

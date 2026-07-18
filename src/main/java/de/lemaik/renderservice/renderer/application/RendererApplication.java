@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import se.llbit.chunky.JsonSettings;
 import se.llbit.chunky.PersistentSettings;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -35,10 +34,9 @@ public abstract class RendererApplication {
     private final RenderServerApiClient api;
     private final RendererSettings settings;
     private Path jobDirectory;
-    private Path texturepacksDirectory;
+    private Path resourcePacksPath;
 
     private RenderWorker worker;
-    private File texturepackPath;
 
     public RendererApplication(RendererSettings settings) {
         this.settings = settings;
@@ -70,16 +68,16 @@ public abstract class RendererApplication {
         LOGGER.info("Chunky home: " + chunkyHome);
 
         if (getSettings().getTexturepacksPath().isPresent()) {
-            texturepacksDirectory = getSettings().getTexturepacksPath().get().toPath();
+            resourcePacksPath = getSettings().getTexturepacksPath().get().toPath();
         } else {
-            texturepacksDirectory = Paths.get(System.getProperty("user.dir"), "rs_texturepacks");
+            resourcePacksPath = Paths.get(System.getProperty("user.dir"), "rs_texturepacks");
         }
-        LOGGER.info("Resourcepacks path: " + texturepacksDirectory);
-        texturepacksDirectory.toFile().mkdirs();
+        LOGGER.info("Resource packs path: " + resourcePacksPath);
+        resourcePacksPath.toFile().mkdirs();
 
         worker = new RenderWorker(getSettings().getThreads().orElse(Runtime.getRuntime().availableProcessors()),
                 getSettings().getCpuLoad().orElse(100),
-                getSettings().getName().orElse(null), jobDirectory, texturepacksDirectory, api);
+                getSettings().getName().orElse(null), jobDirectory, resourcePacksPath, api);
         worker.start();
     }
 
