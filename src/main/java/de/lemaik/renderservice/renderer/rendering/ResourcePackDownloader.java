@@ -5,6 +5,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -17,6 +19,7 @@ import java.util.concurrent.*;
 
 public class ResourcePackDownloader {
     private static final ResourcePackDownloader INSTANCE = new ResourcePackDownloader();
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResourcePackDownloader.class);
 
     private final OkHttpClient client = new OkHttpClient.Builder()
             .followRedirects(true)
@@ -68,47 +71,41 @@ public class ResourcePackDownloader {
 
         // already downloaded
         if (Files.exists(target)) {
-            System.out.println("Skipping " + pack.getId() + " (exists)");
+            LOGGER.info("Skipping {} because it already exists", pack.getId());
             return target;
         }
 
         // remove incomplete previous download
         Files.deleteIfExists(temp);
 
-        System.out.println("Downloading " + pack.getId());
-
+        LOGGER.info("Downloading {}", pack.getId());
         Request request = new Request.Builder()
                 .url(pack.getUrl())
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
-
             if (!response.isSuccessful()) {
                 throw new IOException(
                         "HTTP " + response.code() + " while downloading " + pack.getId()
                 );
             }
-
             if (response.body() == null) {
                 throw new IOException(
                         "Empty response body for " + pack.getId()
                 );
             }
-
             try (BufferedSink bufferedSink = Okio.buffer(Okio.sink(temp))) {
                 bufferedSink.writeAll(response.body().source());
             }
-
             try {
                 Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE);
             } catch (AtomicMoveNotSupportedException e) {
                 // fallback for filesystems that don't support atomic moves
                 Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
             }
-
-            System.out.println("Finished " + pack.getId());
+            LOGGER.info("Finished downloading {}", pack.getId());
             return target;
         } catch (Exception e) {
+            LOGGER.error("Failed to download {}", pack.getId());
             // cleanup broken download
             Files.deleteIfExists(temp);
             throw e;

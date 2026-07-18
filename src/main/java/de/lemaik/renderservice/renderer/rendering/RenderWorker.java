@@ -21,12 +21,17 @@ package de.lemaik.renderservice.renderer.rendering;
 import de.lemaik.renderservice.renderer.chunky.RenderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.llbit.chunky.resources.ResourcePackLoader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * A renderer worker thread.
@@ -35,18 +40,19 @@ public class RenderWorker extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RenderWorker.class);
     private final Path jobDirectory;
-    private final Path texturepacksDirectory;
+    private final Path resourcePacksPath;
     private final int threads;
     private final int cpuLoad;
     private final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
     private final RenderServerApiClient apiClient;
     private int nextRestartDelaySeconds = 1;
+    private List<Integer> currentlyLoadedResourcepackIds = Collections.emptyList();
 
     public RenderWorker(int threads, int cpuLoad, String name, Path jobDirectory,
                         Path texturepacksDirectory, RenderServerApiClient apiClient) {
         this.threads = threads;
         this.cpuLoad = cpuLoad;
-        this.texturepacksDirectory = texturepacksDirectory;
+        this.resourcePacksPath = texturepacksDirectory;
         this.jobDirectory = jobDirectory;
         this.apiClient = apiClient;
     }
@@ -68,8 +74,19 @@ public class RenderWorker extends Thread {
                 Path taskPath = jobDirectory.resolve("task-" + task.getId());
                 taskPath.toFile().mkdir();
                 if (worker == null || !task.getJob().getId().equals(previousJobId)) {
-                    worker = new TaskWorker(taskPath, texturepacksDirectory, threads, cpuLoad, apiClient);
+                    worker = new TaskWorker(taskPath, resourcePacksPath, threads, cpuLoad, apiClient);
                     worker.loadScene(task);
+                    List<Integer> resourcePacks = task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).toList();
+                    if (!this.currentlyLoadedResourcepackIds.equals(resourcePacks)) {
+                        String resourcePackIds = task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).map(Object::toString).collect(Collectors.joining(", "));
+                        LOGGER.info("Downloading resource packs: {}", resourcePackIds);
+                        List<File> downloadedResourcePacks = ResourcePackDownloader.getInstance().downloadResourcePacks(task.getFiles(), resourcePacksPath).stream().map(Path::toFile).toList();
+                        LOGGER.info("Loading resource packs: {}", resourcePackIds);
+                        ResourcePackLoader.loadResourcePacks(downloadedResourcePacks);
+                        this.currentlyLoadedResourcepackIds = resourcePacks;
+                    } else {
+                        LOGGER.info("Re-using already loaded resource packs");
+                    }
                     previousJobId = task.getJob().getId();
                 }
                 worker.renderScene(task);

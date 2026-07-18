@@ -25,18 +25,14 @@ import de.lemaik.renderservice.renderer.util.FileUtil;
 import okio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.llbit.chunky.resources.ResourcePackLoader;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class TaskWorker {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskWorker.class);
@@ -45,7 +41,6 @@ public class TaskWorker {
     private final Path texturepacksDir;
     private final ChunkyWrapper chunky;
     private final RenderServerApiClient apiClient;
-    private Set<String> currentlyLoadedResourcepackIds = Collections.emptySet();
 
     public TaskWorker(Path workingDir, Path texturepacksDir, int threads, int cpuLoad, RenderServerApiClient apiClient) {
         this.workingDir = workingDir;
@@ -79,16 +74,6 @@ public class TaskWorker {
                 apiClient.downloadEmittergrid(task, new File(workingDir.toFile(), "scene.emittergrid"))
         ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
-        Set<String> resourcePacks = task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).collect(Collectors.toUnmodifiableSet());
-        if (!this.currentlyLoadedResourcepackIds.equals(resourcePacks)) {
-            LOGGER.info("Loading resource packs: {}", task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).collect(Collectors.joining(", ")));
-            ResourcePackLoader.loadResourcePacks(
-                    ResourcePackDownloader.getInstance().downloadResourcePacks(task.getFiles(), texturepacksDir).stream().map(Path::toFile).toList()
-            );
-            this.currentlyLoadedResourcepackIds = resourcePacks;
-        } else {
-            LOGGER.info("Re-using already loaded resource packs: {}", task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).collect(Collectors.joining(", ")));
-        }
         chunky.loadScene(new File(workingDir.toFile(), "scene.json"));
     }
 

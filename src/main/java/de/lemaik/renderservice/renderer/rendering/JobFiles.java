@@ -33,10 +33,10 @@ public class JobFiles {
     }
 
     public static class ResourcePack {
-        private String id;
+        private int id;
         private String url;
 
-        public String getId() {
+        public int getId() {
             return id;
         }
 
