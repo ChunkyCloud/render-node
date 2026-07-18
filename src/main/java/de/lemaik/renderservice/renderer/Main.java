@@ -35,10 +35,13 @@ import java.util.Optional;
  */
 public class Main {
 
-    public static final String VERSION = Main.class.getPackage().getImplementationVersion();
+    public static final String VERSION;
     public static final int VERSION_CODE = 1;
 
     static {
+        String version = Main.class.getPackage().getImplementationVersion();
+        VERSION = version == null ? "unknown" : version;
+
         Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING,
                 Level.INFO);
     }

@@ -25,6 +25,7 @@ import okhttp3.*;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.Okio;
+import se.llbit.chunky.main.Version;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class RenderServerApiClient {
                         return chain.proceed(
                                 chain.request().newBuilder()
                                         .header("User-Agent",
-                                                "ChunkyCloud Render Node v" + Main.VERSION + ", VC " + Main.VERSION_CODE)
+                                                "ChunkyCloudRenderNode/" + Main.VERSION + " (VC " + Main.VERSION_CODE + ") Chunky/" + Version.getVersion() + " (" + Version.getCommit() + ")")
                                         .header("Authorization", "Bearer " + apiKey)
                                         .build()
                         );

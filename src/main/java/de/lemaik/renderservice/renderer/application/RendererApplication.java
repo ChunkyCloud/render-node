@@ -18,12 +18,14 @@
 
 package de.lemaik.renderservice.renderer.application;
 
+import de.lemaik.renderservice.renderer.Main;
 import de.lemaik.renderservice.renderer.rendering.RenderServerApiClient;
 import de.lemaik.renderservice.renderer.rendering.RenderWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.llbit.chunky.JsonSettings;
 import se.llbit.chunky.PersistentSettings;
+import se.llbit.chunky.main.Version;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,6 +51,8 @@ public abstract class RendererApplication {
     }
 
     public void start() {
+        LOGGER.info("Render node version: " + Main.VERSION + " (version code " + Main.VERSION_CODE + ")");
+        LOGGER.info("Chunky version: " + Version.getVersion());
         if (getSettings().getJobPath().isPresent()) {
             jobDirectory = getSettings().getJobPath().get().toPath();
         } else {
