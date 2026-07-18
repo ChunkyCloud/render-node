@@ -18,86 +18,20 @@
 
 package de.lemaik.renderservice.renderer.rendering;
 
-import java.util.List;
-import java.util.Optional;
-
 public class Job {
+    private String id;
+    private int width;
+    private int height;
 
-  private String _id;
-  private List<JobFile> files;
-  private String texturepack;
-  private boolean cancelled;
-  private boolean pictureOnly;
-  private int spp;
-  private int targetSpp;
-
-  public String getId() {
-    return _id;
-  }
-
-  public String getSceneUrl() {
-    return getUrl("scene").get();
-  }
-
-  public Optional<String> getFoliageUrl() {
-    return getUrl("foliage");
-  }
-
-  public Optional<String> getGrassUrl() {
-    return getUrl("grass");
-  }
-
-
-  public String getOctreeUrl() {
-    return getUrl("octree").get();
-  }
-
-  public Optional<String> getEmittergridUrl() {
-    return getUrl("emittergrid");
-  }
-
-  public Optional<String> getSkymapUrl() {
-    return files.stream().filter(t -> t.getType().equalsIgnoreCase("skymap")).findFirst()
-        .map(JobFile::getUrl);
-  }
-
-  private Optional<String> getUrl(String type) {
-    Optional<JobFile> file = files.stream().filter(t -> t.getType().equalsIgnoreCase(type))
-        .findFirst();
-    return file.map(JobFile::getUrl);
-  }
-
-  public String getTexturepack() {
-    return texturepack;
-  }
-
-  public boolean isCancelled() {
-    return cancelled;
-  }
-
-  public boolean isPictureOnly() {
-    return pictureOnly;
-  }
-
-  public int getSpp() {
-    return spp;
-  }
-
-  public int getTargetSpp() {
-    return targetSpp;
-  }
-
-  public class JobFile {
-
-    private String type;
-    private String url;
-
-    public String getType() {
-      return type;
+    public String getId() {
+        return id;
     }
 
-    public String getUrl() {
-      return url;
+    public int getWidth() {
+        return width;
     }
-  }
+
+    public int getHeight() {
+        return height;
+    }
 }

@@ -19,14 +19,29 @@
 package de.lemaik.renderservice.renderer.rendering;
 
 public class Task {
-    private String jobId;
+    private int id;
     private int spp;
+    private Tile tile;
+    private JobFiles files;
+    private Job job;
 
-    public String getJobId() {
-        return jobId;
+    public int getId() {
+        return id;
     }
 
     public int getSpp() {
         return spp;
+    }
+
+    public Tile getTile() {
+        return tile;
+    }
+
+    public JobFiles getFiles() {
+        return files;
+    }
+
+    public Job getJob() {
+        return job;
     }
 }

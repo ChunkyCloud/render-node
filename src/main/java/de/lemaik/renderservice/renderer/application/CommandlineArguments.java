@@ -19,6 +19,7 @@
 package de.lemaik.renderservice.renderer.application;
 
 import com.lexicalscope.jewel.cli.Option;
+
 import java.io.File;
 
 /**
@@ -52,8 +53,8 @@ public interface CommandlineArguments {
     int getXmx();
 
     @Option(longName = "texturepacks-path",
-        description = "path for texturepacks",
-        defaultToNull = true)
+            description = "path for texturepacks",
+            defaultToNull = true)
     File getTexturepacksPath();
 
     @Option(longName = "job-path",
@@ -66,10 +67,10 @@ public interface CommandlineArguments {
             defaultToNull = true)
     Integer getMaxUploadRate();
 
-    @Option(longName = "master",
-            description = "URL of the master server API endpoint",
+    @Option(longName = "api",
+            description = "URL of the ChunkyCloud API endpoint",
             defaultValue = "https://api.chunkycloud.lemaik.de")
-    String getMasterServer();
+    String getApiUrl();
 
     @Option(longName = "cache-directory",
             description = "cache directory for scene files",
@@ -85,8 +86,8 @@ public interface CommandlineArguments {
             defaultToNull = true)
     String getName();
 
-    @Option(longName="api-key",
-            description="API Key",
+    @Option(longName = "api-key",
+            description = "API Key",
             defaultToNull = true)
     String getApiKey();
 }

@@ -27,10 +27,4 @@ public class HeadlessRenderer extends RendererApplication {
     public HeadlessRenderer(RendererSettings settings) {
         super(settings);
     }
-
-    @Override
-    protected void onUpdateAvailable() {
-        LOGGER.error("An update is available. You need to download it in order to use the renderer.");
-        System.exit(1);
-    }
 }

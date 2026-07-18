@@ -25,58 +25,59 @@ import de.lemaik.renderservice.renderer.application.HeadlessRenderer;
 import de.lemaik.renderservice.renderer.application.RendererSettings;
 import de.lemaik.renderservice.renderer.chunky.FilteringLogReceiver;
 import de.lemaik.renderservice.renderer.chunky.Slf4jLogReceiver;
-import java.util.Optional;
 import se.llbit.log.Level;
 import se.llbit.log.Log;
+
+import java.util.Optional;
 
 /**
  * The main class.
  */
 public class Main {
 
-  public static final String VERSION = Main.class.getPackage().getImplementationVersion();
-  public static final int API_VERSION = 1;
+    public static final String VERSION = Main.class.getPackage().getImplementationVersion();
+    public static final int VERSION_CODE = 1;
 
-  static {
-    Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING,
-        Level.INFO);
-  }
-
-  private Main() {
-  }
-
-  public static void main(String[] args) {
-    Cli<CommandlineArguments> cli = CliFactory.createCli(CommandlineArguments.class);
-
-    CommandlineArguments arguments;
-    try {
-      arguments = cli.parseArguments(args);
-    } catch (Exception e) {
-      System.out.println(cli.getHelpMessage());
-      return;
+    static {
+        Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING,
+                Level.INFO);
     }
 
-    String apiKey = Optional.ofNullable(arguments.getApiKey()).orElse(System.getenv("API_KEY"));
-    if (apiKey == null) {
-      System.err.println(
-          "Missing API key. Use the --api-key option or the API_KEY environment variable to specify one.");
-      System.exit(-1);
+    private Main() {
     }
 
-    RendererSettings settings = new RendererSettings(
-        arguments.getCpuLoad(),
-        arguments.getThreads(),
-        arguments.getXms(),
-        arguments.getXmx(),
-        arguments.getJobPath(),
-        arguments.getTexturepacksPath(),
-        arguments.getMaxUploadRate(),
-        arguments.getMasterServer(),
-        arguments.getCacheDirectory(),
-        arguments.getMaxCacheSize(),
-        arguments.getName(),
-        apiKey
-    );
-    new HeadlessRenderer(settings).start();
-  }
+    public static void main(String[] args) {
+        Cli<CommandlineArguments> cli = CliFactory.createCli(CommandlineArguments.class);
+
+        CommandlineArguments arguments;
+        try {
+            arguments = cli.parseArguments(args);
+        } catch (Exception e) {
+            System.out.println(cli.getHelpMessage());
+            return;
+        }
+
+        String apiKey = Optional.ofNullable(arguments.getApiKey()).orElse(System.getenv("API_KEY"));
+        if (apiKey == null) {
+            System.err.println(
+                    "Missing API key. Use the --api-key option or the API_KEY environment variable to specify one.");
+            System.exit(-1);
+        }
+
+        RendererSettings settings = new RendererSettings(
+                arguments.getCpuLoad(),
+                arguments.getThreads(),
+                arguments.getXms(),
+                arguments.getXmx(),
+                arguments.getJobPath(),
+                arguments.getTexturepacksPath(),
+                arguments.getMaxUploadRate(),
+                arguments.getApiUrl(),
+                arguments.getCacheDirectory(),
+                arguments.getMaxCacheSize(),
+                arguments.getName(),
+                apiKey
+        );
+        new HeadlessRenderer(settings).start();
+    }
 }

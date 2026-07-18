@@ -19,162 +19,132 @@
 package de.lemaik.renderservice.renderer.rendering;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.QueueingConsumer;
-import de.lemaik.renderservice.renderer.chunky.ChunkyRenderDump;
 import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
+import de.lemaik.renderservice.renderer.chunky.RenderException;
 import de.lemaik.renderservice.renderer.util.FileUtil;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import okio.Buffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
-import javax.imageio.ImageIO;
-import okhttp3.Response;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class TaskWorker {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskWorker.class);
 
-public class TaskWorker implements Runnable {
+    private final Path workingDir;
+    private final Path texturepacksDir;
+    private final ChunkyWrapper chunky;
+    private final RenderServerApiClient apiClient;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TaskWorker.class);
-  private static final Gson gson = new Gson();
-
-  private final QueueingConsumer.Delivery delivery;
-  private final Channel channel;
-  private final Path workingDir;
-  private final Path texturepacksDir;
-  private final int threads;
-  private final int cpuLoad;
-  private final ChunkyWrapper chunky;
-  private final RenderServerApiClient apiClient;
-
-  public TaskWorker(QueueingConsumer.Delivery delivery, Channel channel, Path workingDir,
-      Path texturepacksDir, int threads, int cpuLoad, ChunkyWrapper chunky,
-      RenderServerApiClient apiClient) {
-    this.delivery = delivery;
-    this.channel = channel;
-    this.workingDir = workingDir;
-    this.texturepacksDir = texturepacksDir;
-    this.threads = threads;
-    this.cpuLoad = cpuLoad;
-    this.chunky = chunky;
-    this.apiClient = apiClient;
-  }
-
-  @Override
-  public void run() {
-    try {
-      Task task = gson
-          .fromJson(new String(delivery.getBody(), "UTF-8"), Task.class);
-      LOGGER.info("New task: {} spp for job {}", task.getSpp(), task.getJobId());
-      Job job = apiClient.getJob(task.getJobId()).get(10, TimeUnit.MINUTES);
-      if (job == null) {
-        LOGGER.info("Job was deleted, skipping the task and removing it from the queue");
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-        return;
-      }
-      if (job.isCancelled()) {
-        LOGGER.info("Job is cancelled, skipping the task and removing it from the queue");
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-        return;
-      }
-      if (job.getSpp() >= job.getTargetSpp()) {
-        LOGGER.info(
-            "Job is effectively finished ({} of {} spp), skipping the task and removing it from the queue",
-            job.getSpp(), job.getTargetSpp());
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-        return;
-      }
-
-      final JsonObject[] sceneDescription = new JsonObject[1];
-      LOGGER.info("Downloading scene files...");
-      final File skymap = job.getSkymapUrl().isPresent()
-          ? apiClient.downloadSkymapTo(job.getSkymapUrl().get(), workingDir).get().getAbsoluteFile()
-          : null;
-
-      CompletableFuture.allOf(
-          apiClient.getScene(job).thenAccept((scene -> {
-            scene.addProperty("name", "scene");
-            sceneDescription[0] = scene;
-            if (skymap != null) {
-              scene.getAsJsonObject("sky").addProperty("skymap", skymap.getAbsolutePath());
-            }
-            try (OutputStreamWriter out = new OutputStreamWriter(
-                new FileOutputStream(new File(workingDir.toFile(), "scene.json")))) {
-              new Gson().toJson(scene, out);
-            } catch (IOException e) {
-              // TODO
-              e.printStackTrace();
-            }
-          })),
-          // apiClient.downloadFoliage(job, new File(workingDir.toFile(), "scene.foliage")),
-          // apiClient.downloadGrass(job, new File(workingDir.toFile(), "scene.grass")),
-          apiClient.downloadOctree(job, new File(workingDir.toFile(), "scene.octree2")),
-          apiClient.downloadEmittergrid(job, new File(workingDir.toFile(), "scene.emittergrid"))
-      ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
-
-      File texturepack = null;
-      if (job.getTexturepack() != null) {
-        texturepack = new File(texturepacksDir.toFile(), job.getTexturepack() + ".zip");
-        if (!texturepack.isFile()) {
-          LOGGER.info("Downloading texturepack...");
-          apiClient.downloadResourcepack(job.getTexturepack(), texturepack).get(4, TimeUnit.HOURS);
-        }
-      }
-
-      LOGGER.info("Rendering...");
-      byte[] dump = chunky
-          .render(texturepack, new File(workingDir.toFile(), "scene.json"), task.getSpp(),
-              threads,
-              cpuLoad).get();
-
-      LOGGER.info("Uploading...");
-      if (job.isPictureOnly() && job.getTargetSpp() <= task.getSpp()) {
-        LOGGER.info("Dump not needed, uploading picture instead");
-        ChunkyRenderDump renderDump = ChunkyRenderDump
-            .fromStream(new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(dump))));
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-          BufferedImage image = renderDump.getPicture(
-              sceneDescription[0].get("exposure").getAsDouble(),
-              ChunkyRenderDump.Postprocess
-                  .valueOf(sceneDescription[0].get("postprocess").getAsString())
-          );
-          ImageIO.write(image, "png", bos);
-          byte[] picture = bos.toByteArray();
-          try (Response res = apiClient.postPicture(job.getId(), picture, renderDump.getSpp())
-              .get(1, TimeUnit.HOURS)) {
-            if (res.code() == 409) {
-              LOGGER.info("Picture upload rejected, uploading dump instead");
-              apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
-            }
-          }
-        }
-      } else {
-        apiClient.postDump(job.getId(), dump).get(1, TimeUnit.HOURS);
-      }
-
-      channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-      LOGGER.info("Done");
-    } catch (Exception e) {
-      LOGGER.warn("An error occurred while processing a task", e);
-      if (channel.isOpen()) {
-        try {
-          channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
-        } catch (IOException e1) {
-          LOGGER.error("Could not nack a failed task", e);
-        }
-      }
-    } finally {
-      FileUtil.deleteDirectory(workingDir.toFile());
+    public TaskWorker(Path workingDir, Path texturepacksDir, int threads, int cpuLoad, RenderServerApiClient apiClient) {
+        this.workingDir = workingDir;
+        this.texturepacksDir = texturepacksDir;
+        this.chunky = new ChunkyWrapper(threads, cpuLoad);
+        chunky.setDefaultTexturepack(texturepacksDir.toFile());
+        this.apiClient = apiClient;
     }
-  }
+
+    public void loadScene(Task task) throws ExecutionException, InterruptedException, TimeoutException, IOException {
+        LOGGER.info("Loading scene for task {} for job {}", task.getId(), task.getJob().getId());
+
+        LOGGER.info("Downloading scene files...");
+        final File skymap = null; /*job.getSkymapUrl().isPresent()
+          ? apiClient.downloadSkymapTo(job.getSkymapUrl().get(), workingDir).get().getAbsoluteFile()
+          : null;*/ //TODO skymap
+
+        CompletableFuture.allOf(
+                apiClient.getScene(task).thenAccept((scene -> {
+                    scene.addProperty("name", "scene");
+                    if (skymap != null) {
+                        scene.getAsJsonObject("sky").addProperty("skymap", skymap.getAbsolutePath());
+                    }
+                    try (OutputStreamWriter out = new OutputStreamWriter(
+                            new FileOutputStream(new File(workingDir.toFile(), "scene.json")))) {
+                        new Gson().toJson(scene, out);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })),
+                apiClient.downloadOctree(task, new File(workingDir.toFile(), "scene.octree2")),
+                apiClient.downloadEmittergrid(task, new File(workingDir.toFile(), "scene.emittergrid"))
+        ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
+
+        File texturepack = null; // TODO resourcepacks
+            /*
+            if (job.getTexturepack() != null) {
+                texturepack = new File(texturepacksDir.toFile(), job.getTexturepack() + ".zip");
+                if (!texturepack.isFile()) {
+                    LOGGER.info("Downloading texturepack...");
+                    apiClient.downloadResourcepack(job.getTexturepack(), texturepack).get(4, TimeUnit.HOURS);
+                }
+            }
+             */
+
+        chunky.loadScene(texturepack, new File(workingDir.toFile(), "scene.json"));
+    }
+
+    public void renderScene(Task task) throws RenderException {
+        LOGGER.info("Render scene for task {} for job {}", task.getId(), task.getJob().getId());
+
+        ScheduledExecutorService progressReportScheduler = Executors.newSingleThreadScheduledExecutor();
+        try {
+            Future<ChunkyWrapper.RenderResult> renderFuture;
+            try {
+                LOGGER.info("Rendering...");
+                renderFuture = chunky.render(task);
+            } catch (InterruptedException e) {
+                throw new RenderException("Rendering interrupted", e);
+            }
+
+            AtomicBoolean rendering = new AtomicBoolean(true);
+
+            progressReportScheduler.scheduleAtFixedRate(() -> {
+                try {
+                    RenderServerApiClient.ProgressReportResult result = apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp()).get(3, TimeUnit.SECONDS);
+                    if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
+                        LOGGER.info("Render task {} has been aborted, interrupting renderer", task.getId());
+                        renderFuture.cancel(true);
+                    }
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    LOGGER.error("Failed to report task progress", e);
+                }
+            }, 0, 5, TimeUnit.SECONDS);
+
+            ChunkyWrapper.RenderResult result;
+            try {
+                result = renderFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RenderException("Rendering failed", e);
+            }
+            rendering.set(false);
+
+            LOGGER.info("Uploading...");
+            try {
+                FinishTaskRenderingResponse.UploadUrls uploadUrls = apiClient.finishTaskRendering(task.getId()).get().getUploadUrls();
+                if (uploadUrls.getDump() != null) {
+                    try (Buffer dumpBuffer = new Buffer()) {
+                        result.writeDump(dumpBuffer.outputStream());
+                        apiClient.uploadFile(uploadUrls.getDump(), dumpBuffer, "application/octet-stream").get();
+                    }
+                }
+                try (Buffer imageBuffer = new Buffer()) {
+                    result.writePngImage(imageBuffer.outputStream());
+                    apiClient.uploadFile(uploadUrls.getImage(), imageBuffer, "image/png").get();
+                }
+                apiClient.finishTask(task.getId()).get();
+            } catch (InterruptedException | ExecutionException | IOException e) {
+                throw new RenderException("Upload failed", e);
+            }
+            LOGGER.info("Done");
+        } finally {
+            progressReportScheduler.shutdownNow();
+            FileUtil.deleteDirectory(workingDir.toFile());
+        }
+    }
 }

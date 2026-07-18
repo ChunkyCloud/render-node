@@ -1,73 +1,125 @@
-/*
- * Copyright (c) 2013-2016 Maik Marschner <https://lemaik.de>
- *
- * This file is part of libchunky.
- *
- * libchunky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libchunky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with libchunky.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.lemaik.renderservice.renderer.chunky;
+
+import de.lemaik.renderservice.renderer.rendering.Task;
+import se.llbit.chunky.renderer.DefaultRenderManager;
+import se.llbit.chunky.renderer.RenderStatus;
+import se.llbit.chunky.renderer.SnapshotControl;
+import se.llbit.chunky.renderer.export.PictureExportFormats;
+import se.llbit.chunky.renderer.postprocessing.PostProcessingFilters;
+import se.llbit.chunky.renderer.renderdump.RenderDump;
+import se.llbit.chunky.renderer.scene.Scene;
+import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
+import se.llbit.chunky.resources.ResourcePackLoader;
+import se.llbit.util.ProgressListener;
+import se.llbit.util.TaskTracker;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-/**
- * A wrapper for chunky.
- */
-public interface ChunkyWrapper {
+public class ChunkyWrapper {
+    private final VoidRenderContext context;
+    private final SynchronousSceneManager sceneManager;
+    private final DefaultRenderManager renderer;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-  /**
-   * Starts the wrapped chunky instance.
-   *
-   * @throws IOException if an error occures while rendering
-   */
-  CompletableFuture<byte[]> render(File texturepack, File scene, int targetSpp, int threads,
-      int cpuLoad) throws IOException, InterruptedException;
+    private File defaultTexturepack;
+    private File previousTexturepack;
 
-  /**
-   * Stops the wrapped chunky instance.
-   */
-  void stop();
+    public ChunkyWrapper(int threads, int cpuLoad) {
+        context = new VoidRenderContext();
+        context.setRenderThreadCount(threads);
+        renderer = new DefaultRenderManager(context, true);
+        sceneManager = new SynchronousSceneManager(context, renderer);
+        renderer.setCPULoad(cpuLoad);
+        renderer.setSceneProvider(sceneManager);
+        renderer.setSnapshotControl(new SnapshotControl() {
+            @Override
+            public boolean saveSnapshot(Scene scene, int nextSpp) {
+                return false;
+            }
 
-  /**
-   * Adds the given listener.
-   *
-   * @param listener listener to add
-   */
-  void addListener(RenderListener listener);
+            @Override
+            public boolean saveRenderDump(Scene scene, int nextSpp) {
+                return false;
+            }
+        });
+    }
 
-  /**
-   * Removes the given listener.
-   *
-   * @param listener listener to remove
-   */
-  void removeListener(RenderListener listener);
+    public void loadScene(File texturepack, File scene) throws IOException {
+        if (texturepack == null) {
+            texturepack = defaultTexturepack;
+        }
 
-  /**
-   * Sets the target samples per second.
-   *
-   * @param targetSpp target samples per second
-   */
-  void setTargetSpp(int targetSpp);
+        // all chunky instances share their texturepacks statically
+        if (!texturepack.equals(previousTexturepack)) {
+            if (texturepack.equals(defaultTexturepack)) {
+                ResourcePackLoader.loadResourcePacks(Collections.singletonList(defaultTexturepack));
+            } else {
+                // load the selected texturepack and the default texturepack as fallback
+                ResourcePackLoader.loadResourcePacks(Arrays.asList(texturepack, defaultTexturepack));
+            }
+            previousTexturepack = texturepack;
+        }
 
-  /**
-   * Sets the number of threads to use for rendering.
-   *
-   * @param threadCount number of rendering threads
-   */
-  void setThreadCount(int threadCount);
+        context.setSceneDirectory(scene.getParentFile());
+        sceneManager.getScene()
+                .loadScene(context,
+                        scene.getName().substring(0, scene.getName().length() - ".json".length()),
+                        new TaskTracker(ProgressListener.NONE));
+    }
 
-  void setDefaultTexturepack(File texturepackPath);
+    public Future<RenderResult> render(Task task) throws InterruptedException {
+        return executor.submit(() -> {
+            context.setSppPerPass(1);
+            sceneManager.getScene().refresh();
+            sceneManager.withEditSceneProtected(scene -> {
+                task.getTile().applyToScene(scene, task.getJob().getWidth(), task.getJob().getHeight());
+                scene.setPostprocess(PostProcessingFilters.NONE);
+                scene.setTargetSpp(task.getSpp());
+            });
+            sceneManager.applySceneChanges();
+            sceneManager.getScene().startHeadlessRender();
+            renderer.run();
+
+            RenderStatus status = renderer.getRenderStatus();
+            Scene renderedScene = sceneManager.getScene();
+            renderedScene.renderTime = status.getRenderTime();
+            renderedScene.spp = status.getSpp();
+
+            return new RenderResult() {
+                @Override
+                public void writePngImage(OutputStream outputStream) throws IOException {
+                    renderer.bufferedScene.writeFrame(outputStream, PictureExportFormats.PNG, TaskTracker.NONE);
+                }
+
+                @Override
+                public void writeDump(OutputStream outputStream) throws IOException {
+                    RenderDump.save(outputStream, renderer.bufferedScene, TaskTracker.NONE);
+                }
+            };
+        });
+    }
+
+    public void setDefaultTexturepack(File texturepackPath) {
+        this.defaultTexturepack = texturepackPath;
+    }
+
+    public int getCurrentSpp() {
+        return renderer.getRenderStatus().getSpp();
+    }
+
+    public abstract class RenderResult {
+        private RenderResult() {
+        }
+
+        public abstract void writePngImage(OutputStream outputStream) throws IOException;
+
+        public abstract void writeDump(OutputStream outputStream) throws IOException;
+    }
 }
