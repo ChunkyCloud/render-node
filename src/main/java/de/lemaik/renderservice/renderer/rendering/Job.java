@@ -1,6 +1,5 @@
 /*
- * rs-rendernode is the worker node software of our RenderService.
- * Copyright (C) 2016 Wertarbyte <https://wertarbyte.com>
+ * Copyright (C) 2016-2026 leMaik and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
