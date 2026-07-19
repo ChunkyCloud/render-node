@@ -20,7 +20,7 @@ marks the task as finished.
 3. Run the jar
 
    ```bash
-   java -jar target/rendernode-jar-with-dependencies.jar \
+   java -jar rendernode-v2.0.0.jar \
      --api-key your-render-node-api-key
    ```
 
@@ -60,19 +60,11 @@ packs and cached scene files survive container restarts.
 
 ## Docker
 
-Build the image:
-
-```bash
-docker build -t chunkycloud-render-node .
-```
-
-Run the node:
-
 ```bash
 docker run --rm \
   -e API_KEY=your-render-node-api-key \
   -v chunkycloud-render-node-data:/opt/cc-rendernode/data \
-  chunkycloud-render-node
+  ghcr.io/chunkycloud/render-node:latest
 ```
 
 The container runs from `/opt/cc-rendernode/data`, so the default runtime
