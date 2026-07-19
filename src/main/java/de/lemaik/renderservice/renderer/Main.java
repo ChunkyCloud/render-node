@@ -77,15 +77,11 @@ public class Main {
         RendererSettings settings = new RendererSettings(
                 arguments.getCpuLoad(),
                 arguments.getThreads(),
-                arguments.getXms(),
-                arguments.getXmx(),
                 arguments.getJobPath(),
                 arguments.getTexturepacksPath(),
-                arguments.getMaxUploadRate(),
                 arguments.getApiUrl(),
                 arguments.getCacheDirectory(),
                 arguments.getMaxCacheSize(),
-                arguments.getName(),
                 apiKey
         );
         new HeadlessRenderer(settings).start();

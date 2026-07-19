@@ -47,7 +47,7 @@ public class RenderWorker extends Thread {
     private int nextRestartDelaySeconds = 1;
     private List<Integer> currentlyLoadedResourcepackIds = Collections.emptyList();
 
-    public RenderWorker(int threads, int cpuLoad, String name, Path jobDirectory,
+    public RenderWorker(int threads, int cpuLoad, Path jobDirectory,
                         Path texturepacksDirectory, RenderServerApiClient apiClient) {
         this.threads = threads;
         this.cpuLoad = cpuLoad;

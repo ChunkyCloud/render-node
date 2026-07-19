@@ -25,11 +25,6 @@ import java.io.File;
  * Commandline arguments, parsed by {@link com.lexicalscope.jewel.cli.CliFactory}.
  */
 public interface CommandlineArguments {
-    @Option(longName = "headless",
-            description = "Run without GUI",
-            defaultValue = "false")
-    boolean getHeadless();
-
     @Option(longName = "cpu-load",
             description = "Maximum CPU load",
             defaultValue = "100")
@@ -41,16 +36,6 @@ public interface CommandlineArguments {
             defaultValue = "2")
     int getThreads();
 
-    @Option(longName = "chunky-xms",
-            description = "minimum memory for chunky processes, in MB",
-            defaultValue = "1024")
-    int getXms();
-
-    @Option(longName = "chunky-xmx",
-            description = "maximum memory for chunky processes, in MB",
-            defaultValue = "2048")
-    int getXmx();
-
     @Option(longName = "texturepacks-path",
             description = "path for texturepacks",
             defaultToNull = true)
@@ -60,11 +45,6 @@ public interface CommandlineArguments {
             description = "path for temporary job data",
             defaultToNull = true)
     File getJobPath();
-
-    @Option(longName = "upload-rate",
-            description = "maximum upload rate in KB/s",
-            defaultToNull = true)
-    Integer getMaxUploadRate();
 
     @Option(longName = "api",
             description = "URL of the ChunkyCloud API endpoint",
@@ -80,10 +60,6 @@ public interface CommandlineArguments {
             description = "maximum cache size, in mb",
             defaultToNull = true)
     Long getMaxCacheSize();
-
-    @Option(longName = "name",
-            defaultToNull = true)
-    String getName();
 
     @Option(longName = "api-key",
             description = "API Key",

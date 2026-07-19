@@ -80,7 +80,7 @@ public abstract class RendererApplication {
 
         worker = new RenderWorker(getSettings().getThreads().orElse(Runtime.getRuntime().availableProcessors()),
                 getSettings().getCpuLoad().orElse(100),
-                getSettings().getName().orElse(null), jobDirectory, resourcePacksPath, api);
+                jobDirectory, resourcePacksPath, api);
         worker.start();
     }
 
