@@ -20,7 +20,7 @@ marks the task as finished.
 3. Run the jar
 
    ```bash
-   java -jar rendernode-v2.0.0.jar \
+   java -jar rendernode-v2.0.1.jar \
      --api-key your-render-node-api-key
    ```
 
