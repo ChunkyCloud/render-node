@@ -69,9 +69,11 @@ public class Main {
                     throw new RuntimeException("Failed to read the API key from " + apiKeyFile, e);
                 }
             }
-            System.err.println(
-                    "Missing API key. Use the --api-key option or the API_KEY environment variable to specify one.");
-            System.exit(-1);
+            if (apiKey == null) {
+                System.err.println(
+                        "Missing API key. Use the --api-key or --api-key-file option or the API_KEY environment variable to specify one.");
+                System.exit(-1);
+            }
         }
 
         RendererSettings settings = new RendererSettings(
