@@ -13,25 +13,19 @@ marks the task as finished.
 - Java 17 or newer
 - A render-node API key issued by a [ChunkyCloud server](https://github.com/ChunkyCloud/server)
 
-## Run
+## Getting started
 
-Get a render node API key (also called render node token) from the ChunkyCloud server you want to connect to and run the jar.
+1. Get a render node API key (also called render node token) from the ChunkyCloud server you want to connect to
+2. Download the [latest release](https://github.com/ChunkyCloud/render-node/releases/latest)
+3. Run the jar
 
-```bash
-java -jar target/rendernode-jar-with-dependencies.jar \
-  --api-key your-render-node-api-key
-```
+   ```bash
+   java -jar target/rendernode-jar-with-dependencies.jar \
+     --api-key your-render-node-api-key
+   ```
 
 > [!IMPORTANT]
 > You may only run a single process per API key. If you want to host multiple render nodes, get a different API key for each of them.
-
-By default the node connects to leMaik's ChunkyCloud server. Use `--api` to point it at another ChunkyCloud server:
-
-```bash
-java -jar target/rendernode-jar-with-dependencies.jar \
-  --api https://chunkycloud.example.com \
-  --api-key your-render-node-api-key
-```
 
 ## Configuration
 
