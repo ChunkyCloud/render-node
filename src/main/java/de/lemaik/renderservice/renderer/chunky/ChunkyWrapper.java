@@ -91,6 +91,7 @@ public class ChunkyWrapper {
             return new RenderResult() {
                 @Override
                 public void writePngImage(OutputStream outputStream) throws IOException {
+                    renderer.bufferedScene.postProcessFrame(TaskTracker.Task.NONE);
                     renderer.bufferedScene.writeFrame(outputStream, PictureExportFormats.PNG, TaskTracker.NONE);
                 }
 
