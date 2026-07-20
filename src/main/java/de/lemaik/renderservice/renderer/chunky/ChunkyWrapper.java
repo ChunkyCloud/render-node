@@ -22,11 +22,9 @@ import se.llbit.chunky.renderer.DefaultRenderManager;
 import se.llbit.chunky.renderer.RenderStatus;
 import se.llbit.chunky.renderer.SnapshotControl;
 import se.llbit.chunky.renderer.export.PictureExportFormats;
-import se.llbit.chunky.renderer.postprocessing.PostProcessingFilters;
 import se.llbit.chunky.renderer.renderdump.RenderDump;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
-import se.llbit.util.ProgressListener;
 import se.llbit.util.TaskTracker;
 
 import java.io.File;
@@ -62,12 +60,8 @@ public class ChunkyWrapper {
         });
     }
 
-    public void loadScene(File scene) throws IOException {
-        context.setSceneDirectory(scene.getParentFile());
-        sceneManager.getScene()
-                .loadScene(context,
-                        scene.getName().substring(0, scene.getName().length() - ".json".length()),
-                        new TaskTracker(ProgressListener.NONE));
+    public void loadScene(File scene) throws IOException, InterruptedException {
+        sceneManager.loadScene(scene.getParentFile(), scene.getName().substring(0, scene.getName().length() - ".json".length()));
     }
 
     public Future<RenderResult> render(Task task) throws InterruptedException {
