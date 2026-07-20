@@ -20,30 +20,30 @@
 
 package de.lemaik.renderservice.renderer.util;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Contains static file utility methods.
  */
 public class FileUtil {
 
-  /**
-   * Deletes the given directory recursively.
-   *
-   * @param directory directory to delete
-   * @return total number of files that were removed
-   */
-  public static int deleteDirectory(File directory) {
-    int count = 0;
-    File[] contents = directory.listFiles();
-    if (contents != null) {
-      for (File f : contents) {
-        count += deleteDirectory(f);
-      }
+    /**
+     * Deletes the given directory recursively.
+     *
+     * @param directory directory to delete
+     * @throws IOException if deleting the directory failed
+     */
+    public static void deleteDirectory(Path directory) throws IOException {
+        try (Stream<Path> walk = Files.walk(directory)) {
+            List<Path> pathsToDelete = walk.sorted(Comparator.reverseOrder()).toList();
+            for (Path path : pathsToDelete) {
+                Files.deleteIfExists(path);
+            }
+        }
     }
-    if (directory.delete()) {
-      count++;
-    }
-    return count;
-  }
 }

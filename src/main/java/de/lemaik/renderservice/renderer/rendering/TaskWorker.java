@@ -131,7 +131,15 @@ public class TaskWorker {
             LOGGER.info("Done");
         } finally {
             progressReportScheduler.shutdownNow();
-            FileUtil.deleteDirectory(workingDir.toFile());
+        }
+    }
+
+    public void cleanup() {
+        try {
+            LOGGER.info("Deleting task working directory {}", workingDir);
+            FileUtil.deleteDirectory(workingDir);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete task working directory {}", workingDir, e);
         }
     }
 }

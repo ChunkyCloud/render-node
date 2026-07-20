@@ -60,19 +60,29 @@ public class RenderWorker extends Thread {
     public void run() {
         TaskWorker worker = null;
         String previousJobId = null;
+        int iterationsWithoutTask = 0;
 
         while (!interrupted()) {
+            if (iterationsWithoutTask > 2 && worker != null) {
+                worker.cleanup();
+                worker = null;
+            }
             LOGGER.info("Polling for new task");
             try {
                 Task task = apiClient.getNextTask().get();
                 if (task == null) {
+                    iterationsWithoutTask++;
                     Thread.sleep(5000L);
                     continue;
                 }
+                iterationsWithoutTask = 0;
                 LOGGER.info("Got task {} for job {}", task.getId(), task.getJob().getId());
                 Path taskPath = jobDirectory.resolve("task-" + task.getId());
-                taskPath.toFile().mkdir();
                 if (worker == null || !task.getJob().getId().equals(previousJobId)) {
+                    if (worker != null) {
+                        worker.cleanup();
+                    }
+                    taskPath.toFile().mkdir();
                     worker = new TaskWorker(taskPath, resourcePacksPath, threads, cpuLoad, apiClient);
                     worker.loadScene(task);
                     List<Integer> resourcePacks = task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).toList();
@@ -113,5 +123,10 @@ public class RenderWorker extends Thread {
             }
         }
         // TODO notify api that we were interrupted
+
+        if (worker != null) {
+            worker.cleanup();
+            worker = null;
+        }
     }
 }
