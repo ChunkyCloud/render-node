@@ -76,7 +76,6 @@ public class ChunkyWrapper {
             sceneManager.getScene().refresh();
             sceneManager.withEditSceneProtected(scene -> {
                 task.getTile().applyToScene(scene, task.getJob().getWidth(), task.getJob().getHeight());
-                scene.setPostprocess(PostProcessingFilters.NONE);
                 scene.setTargetSpp(task.getSpp());
             });
             sceneManager.applySceneChanges();
@@ -91,7 +90,6 @@ public class ChunkyWrapper {
             return new RenderResult() {
                 @Override
                 public void writePngImage(OutputStream outputStream) throws IOException {
-                    renderer.bufferedScene.postProcessFrame(TaskTracker.Task.NONE);
                     renderer.bufferedScene.writeFrame(outputStream, PictureExportFormats.PNG, TaskTracker.NONE);
                 }
 
