@@ -1,6 +1,8 @@
 cc_cache
 cc_chunky
 cc_jobs
-target
+cc_texturepacks
+build
+.gradle
 .idea
 .git
