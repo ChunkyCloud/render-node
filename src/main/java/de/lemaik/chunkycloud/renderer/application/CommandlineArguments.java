@@ -48,7 +48,7 @@ public interface CommandlineArguments {
 
     @Option(longName = "api",
             description = "URL of the ChunkyCloud API endpoint",
-            defaultValue = "https://api.chunkycloud.lemaik.de")
+            defaultValue = "https://api.chunkycloud.net")
     String getApiUrl();
 
     @Option(longName = "cache-directory",

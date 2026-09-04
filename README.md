@@ -29,17 +29,17 @@ marks the task as finished.
 
 ## Configuration
 
-| Option                 | Default                             | Description                                                            |
-| ---------------------- | ----------------------------------- | ---------------------------------------------------------------------- |
-| `--api`                | `https://api.chunkycloud.lemaik.de` | ChunkyCloud API endpoint.                                              |
-| `--api-key`            | unset                               | Render-node API key.                                                   |
-| `--api-key-file`       | unset                               | File containing the render-node API key. Useful for container secrets. |
-| `--cpu-load`           | `100`                               | Maximum Chunky CPU load.                                               |
-| `-t`, `--thread-count` | `2`                                 | Number of render threads used by Chunky.                               |
-| `--job-path`           | `./cc_jobs`                         | Directory for temporary per-task data.                                 |
-| `--texturepacks-path`  | `./cc_texturepacks`                 | Directory for downloaded resource packs.                               |
-| `--cache-directory`    | `./cc_cache`                        | HTTP cache directory for downloaded scene resources.                   |
-| `--max-cache-size`     | `512`                               | Maximum HTTP cache size, in MB.                                        |
+| Option                 | Default                      | Description                                                           |
+| ---------------------- | ---------------------------- | --------------------------------------------------------------------- |
+| `--api`                | `https://api.chunkycloud.net | ChunkyCloud API endpoint                                              |
+| `--api-key`            | unset                        | Render-node API key                                                   |
+| `--api-key-file`       | unset                        | File containing the render-node API key. Useful for container secrets |
+| `--cpu-load`           | `100`                        | Maximum Chunky CPU load                                               |
+| `-t`, `--thread-count` | `2`                          | Number of render threads used by Chunky                               |
+| `--job-path`           | `./cc_jobs`                  | Directory for temporary per-task data                                 |
+| `--texturepacks-path`  | `./cc_texturepacks`          | Directory for downloaded resource packs                               |
+| `--cache-directory`    | `./cc_cache`                 | HTTP cache directory for downloaded scene resources                   |
+| `--max-cache-size`     | `512`                        | Maximum HTTP cache size, in MB                                        |
 
 The API key can also be provided through the `API_KEY` environment variable.
 
