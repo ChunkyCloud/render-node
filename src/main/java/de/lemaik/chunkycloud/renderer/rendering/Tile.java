@@ -15,25 +15,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.rendering;
 
-public class FinishTaskRenderingResponse {
-    private UploadUrls uploadUrls;
+import se.llbit.chunky.renderer.scene.Scene;
 
-    public UploadUrls getUploadUrls() {
-        return uploadUrls;
+public class Tile {
+    private int x;
+
+    private int y;
+
+    private int width;
+
+    private int height;
+
+    public int getX() {
+        return x;
     }
 
-    public static class UploadUrls {
-        private String image;
-        private String dump;
+    public int getY() {
+        return y;
+    }
 
-        public String getImage() {
-            return image;
-        }
+    public int getWidth() {
+        return width;
+    }
 
-        public String getDump() {
-            return dump;
-        }
+    public int getHeight() {
+        return height;
+    }
+
+    public void applyToScene(Scene scene, int fullWidth, int fullHeight) {
+        scene.setCanvasCropSize(
+                getWidth(), getHeight(),
+                fullWidth, fullHeight,
+                getX(), getY()
+        );
     }
 }

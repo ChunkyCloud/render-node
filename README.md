@@ -90,7 +90,7 @@ target/rendernode.jar
 ```
 
 The main entry point is
-`de.lemaik.renderservice.renderer.Main`.
+`de.lemaik.chunkycloud.renderer.Main`.
 
 ## License
 

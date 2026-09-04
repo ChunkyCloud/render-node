@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.application;
+package de.lemaik.chunkycloud.renderer.application;
 
 import com.lexicalscope.jewel.cli.Option;
 

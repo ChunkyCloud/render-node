@@ -15,15 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer;
+package de.lemaik.chunkycloud.renderer;
 
 import com.lexicalscope.jewel.cli.Cli;
 import com.lexicalscope.jewel.cli.CliFactory;
-import de.lemaik.renderservice.renderer.application.CommandlineArguments;
-import de.lemaik.renderservice.renderer.application.HeadlessRenderer;
-import de.lemaik.renderservice.renderer.application.RendererSettings;
-import de.lemaik.renderservice.renderer.chunky.FilteringLogReceiver;
-import de.lemaik.renderservice.renderer.chunky.Slf4jLogReceiver;
+import de.lemaik.chunkycloud.renderer.application.CommandlineArguments;
+import de.lemaik.chunkycloud.renderer.application.HeadlessRenderer;
+import de.lemaik.chunkycloud.renderer.application.RendererSettings;
+import de.lemaik.chunkycloud.renderer.chunky.FilteringLogReceiver;
+import de.lemaik.chunkycloud.renderer.chunky.Slf4jLogReceiver;
 import se.llbit.log.Level;
 import se.llbit.log.Log;
 

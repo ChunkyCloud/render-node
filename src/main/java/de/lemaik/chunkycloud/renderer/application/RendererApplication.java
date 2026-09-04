@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.application;
+package de.lemaik.chunkycloud.renderer.application;
 
-import de.lemaik.renderservice.renderer.Main;
-import de.lemaik.renderservice.renderer.rendering.RenderServerApiClient;
-import de.lemaik.renderservice.renderer.rendering.RenderWorker;
+import de.lemaik.chunkycloud.renderer.Main;
+import de.lemaik.chunkycloud.renderer.rendering.RenderServerApiClient;
+import de.lemaik.chunkycloud.renderer.rendering.RenderWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.llbit.chunky.JsonSettings;
@@ -82,6 +82,12 @@ public abstract class RendererApplication {
                 getSettings().getCpuLoad().orElse(100),
                 jobDirectory, resourcePacksPath, api);
         worker.start();
+        try {
+            worker.join();
+        } catch (InterruptedException e) {
+            LOGGER.warn("Worker interrupted", e);
+        }
+        System.exit(0);
     }
 
     public RendererSettings getSettings() {

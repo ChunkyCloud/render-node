@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.chunky;
+package de.lemaik.chunkycloud.renderer.chunky;
 
-import de.lemaik.renderservice.renderer.rendering.Task;
+import de.lemaik.chunkycloud.renderer.rendering.Task;
 import se.llbit.chunky.renderer.DefaultRenderManager;
 import se.llbit.chunky.renderer.RenderStatus;
 import se.llbit.chunky.renderer.SnapshotControl;
@@ -97,6 +97,10 @@ public class ChunkyWrapper {
 
     public int getCurrentSpp() {
         return renderer.getRenderStatus().getSpp();
+    }
+
+    public double getCurrentSps() {
+        return 42; // TODO add render listener, keep result
     }
 
     public abstract class RenderResult {

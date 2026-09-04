@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.rendering;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

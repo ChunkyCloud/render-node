@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.rendering;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import de.lemaik.renderservice.renderer.Main;
+import de.lemaik.chunkycloud.renderer.Main;
 import okhttp3.*;
 import okio.Buffer;
 import okio.BufferedSink;

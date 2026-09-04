@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.rendering;
 
 import com.google.gson.Gson;
-import de.lemaik.renderservice.renderer.chunky.ChunkyWrapper;
-import de.lemaik.renderservice.renderer.chunky.RenderException;
-import de.lemaik.renderservice.renderer.util.FileUtil;
+import de.lemaik.chunkycloud.renderer.chunky.ChunkyWrapper;
+import de.lemaik.chunkycloud.renderer.chunky.RenderException;
+import de.lemaik.chunkycloud.renderer.util.FileUtil;
 import okio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

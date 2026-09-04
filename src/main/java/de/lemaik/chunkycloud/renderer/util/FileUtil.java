@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.renderservice.renderer.util;
+package de.lemaik.chunkycloud.renderer.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
