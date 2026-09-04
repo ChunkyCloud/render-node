@@ -116,7 +116,7 @@ public class RenderServerApiClient {
     public CompletableFuture<FinishTaskRenderingResponse> finishTaskRendering(int taskId) {
         CompletableFuture<FinishTaskRenderingResponse> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload").post(RequestBody.create(null, new byte[0]))
+                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload").post(RequestBody.create(new byte[0]))
                         .build())
                 .enqueue(new Callback() {
                     @Override
@@ -145,7 +145,7 @@ public class RenderServerApiClient {
     public CompletableFuture<Void> finishTask(int taskId) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish").post(RequestBody.create(null, new byte[0]))
+                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish").post(RequestBody.create(new byte[0]))
                         .build())
                 .enqueue(new Callback() {
                     @Override
@@ -173,7 +173,7 @@ public class RenderServerApiClient {
         CompletableFuture<ProgressReportResult> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
                         .url(baseUrl + "/nodes/me/tasks/" + taskId + "/progress")
-                        .post(RequestBody.create(MediaType.parse("application/json"), "{\"spp\":" + spp + "}"))
+                        .post(RequestBody.create("{\"spp\":" + spp + "}", MediaType.parse("application/json")))
                         .build())
                 .enqueue(new Callback() {
                     @Override
@@ -241,11 +241,11 @@ public class RenderServerApiClient {
         return relativeOrAbsoluteUrl.startsWith("/") ? baseUrl + relativeOrAbsoluteUrl : relativeOrAbsoluteUrl;
     }
 
-    public CompletableFuture downloadOctree(Task job, File file) {
+    public CompletableFuture<File> downloadOctree(Task job, File file) {
         return downloadFile(resolveUrl(job.getFiles().getOctree().getUrl()), file);
     }
 
-    public CompletableFuture downloadEmittergrid(Task job, File file) {
+    public CompletableFuture<File> downloadEmittergrid(Task job, File file) {
         return Optional.ofNullable(job.getFiles().getEmittergrid())
                 .map(s -> downloadFile(resolveUrl(s.getUrl()), file))
                 .orElseGet(() -> CompletableFuture.completedFuture(null));
@@ -301,11 +301,7 @@ public class RenderServerApiClient {
         return result;
     }
 
-    public CompletableFuture downloadResourcepack(String name, File file) {
-        return downloadFile(baseUrl + "/resourcepacks/" + name, file);
-    }
-
-    private CompletableFuture downloadFile(String url, File file) {
+    private CompletableFuture<File> downloadFile(String url, File file) {
         File tmpFile = new File(file.getAbsolutePath() + ".tmp");
         CompletableFuture<File> result = new CompletableFuture<>();
 
@@ -358,7 +354,7 @@ public class RenderServerApiClient {
         CompletableFuture<Void> result = new CompletableFuture<>();
         uploadClient.newCall(new Request.Builder()
                         .url(url)
-                        .put(RequestBody.create(MediaType.parse(mimeType), body.readByteString()))
+                        .put(RequestBody.create(body.readByteString(), MediaType.parse(mimeType)))
                         .build()
                 )
                 .enqueue(new Callback() {

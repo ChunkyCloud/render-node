@@ -44,7 +44,7 @@ public abstract class RendererApplication {
         api = new RenderServerApiClient(
                 settings.getApiUrl(), settings.getApiKey(),
                 settings.getCacheDirectory()
-                        .orElse(Paths.get(System.getProperty("user.dir"), "rs_cache").toFile()),
+                        .orElse(Paths.get(System.getProperty("user.dir"), "cc_cache").toFile()),
                 settings.getMaxCacheSize().orElse(512L)
         );
     }
@@ -55,12 +55,12 @@ public abstract class RendererApplication {
         if (getSettings().getJobPath().isPresent()) {
             jobDirectory = getSettings().getJobPath().get().toPath();
         } else {
-            jobDirectory = Paths.get(System.getProperty("user.dir"), "rs_jobs");
+            jobDirectory = Paths.get(System.getProperty("user.dir"), "cc_jobs");
         }
         LOGGER.info("Job path: " + jobDirectory);
         jobDirectory.toFile().mkdirs();
 
-        Path chunkyHome = Paths.get(System.getProperty("user.dir"), "rs_chunky");
+        Path chunkyHome = Paths.get(System.getProperty("user.dir"), "cc_chunky");
         chunkyHome.toFile().mkdirs();
 
         PersistentSettings.changeSettingsDirectory(chunkyHome.toFile());
@@ -73,7 +73,7 @@ public abstract class RendererApplication {
         if (getSettings().getTexturepacksPath().isPresent()) {
             resourcePacksPath = getSettings().getTexturepacksPath().get().toPath();
         } else {
-            resourcePacksPath = Paths.get(System.getProperty("user.dir"), "rs_texturepacks");
+            resourcePacksPath = Paths.get(System.getProperty("user.dir"), "cc_texturepacks");
         }
         LOGGER.info("Resource packs path: " + resourcePacksPath);
         resourcePacksPath.toFile().mkdirs();

@@ -36,9 +36,9 @@ marks the task as finished.
 | `--api-key-file`       | unset                               | File containing the render-node API key. Useful for container secrets. |
 | `--cpu-load`           | `100`                               | Maximum Chunky CPU load.                                               |
 | `-t`, `--thread-count` | `2`                                 | Number of render threads used by Chunky.                               |
-| `--job-path`           | `./rs_jobs`                         | Directory for temporary per-task data.                                 |
-| `--texturepacks-path`  | `./rs_texturepacks`                 | Directory for downloaded resource packs.                               |
-| `--cache-directory`    | `./rs_cache`                        | HTTP cache directory for downloaded scene resources.                   |
+| `--job-path`           | `./cc_jobs`                         | Directory for temporary per-task data.                                 |
+| `--texturepacks-path`  | `./cc_texturepacks`                 | Directory for downloaded resource packs.                               |
+| `--cache-directory`    | `./cc_cache`                        | HTTP cache directory for downloaded scene resources.                   |
 | `--max-cache-size`     | `512`                               | Maximum HTTP cache size, in MB.                                        |
 
 The API key can also be provided through the `API_KEY` environment variable.
@@ -50,10 +50,10 @@ the current working directory:
 
 | Directory         | Purpose                                                 |
 | ----------------- | ------------------------------------------------------- |
-| `rs_jobs`         | Temporary task working directories                      |
-| `rs_texturepacks` | Downloaded resource packs                               |
-| `rs_cache`        | HTTP cache for API and scene downloads                  |
-| `rs_chunky`       | Chunky settings directory used by the headless renderer |
+| `cc_jobs`         | Temporary task working directories                      |
+| `cc_texturepacks` | Downloaded resource packs                               |
+| `cc_cache`        | HTTP cache for API and scene downloads                  |
+| `cc_chunky`       | Chunky settings directory used by the headless renderer |
 
 For long-running nodes, mount these directories on persistent storage so resource
 packs and cached scene files survive container restarts.
@@ -80,13 +80,13 @@ You can use a Docker secret to specify the API key, just launch with `--api-key-
 The project builds a self-contained jar file with its dependencies. You'll need Maven 3.
 
 ```bash
-mvn package
+./gradlew build
 ```
 
 The runnable jar file is written to:
 
 ```text
-target/rendernode-jar-with-dependencies.jar
+target/rendernode.jar
 ```
 
 The main entry point is

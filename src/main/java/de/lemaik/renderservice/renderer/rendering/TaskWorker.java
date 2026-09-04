@@ -99,7 +99,7 @@ public class TaskWorker {
                         renderFuture.cancel(true);
                     }
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    LOGGER.error("Failed to report task progress", e);
+                    LOGGER.warn("Failed to report task progress", e);
                 }
             }, 0, 5, TimeUnit.SECONDS);
 

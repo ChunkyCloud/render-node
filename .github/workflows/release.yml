@@ -23,16 +23,17 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
       - name: Build jar
-        run: mvn --batch-mode package
+        run: ./gradlew shadowJar --no-daemon
 
       - name: Add jar to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
-            target/rendernode-jar-with-dependencies.jar#rendernode-${{ github.event.release.tag_name }}.jar \
+            build/libs/rendernode.jar#rendernode-${{ github.event.release.tag_name }}.jar \
             --clobber
 
       - name: Log in to registry

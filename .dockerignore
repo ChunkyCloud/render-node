@@ -1,6 +1,6 @@
-rs_cache
-rs_chunky
-rs_jobs
+cc_cache
+cc_chunky
+cc_jobs
 target
 .idea
 .git
