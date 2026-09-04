@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2026 leMaik and contributors
+ * Copyright (C) 2026 leMaik and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,32 +15,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.chunkycloud.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.api;
 
-public class Task {
-    private int id;
-    private int spp;
-    private Tile tile;
-    private JobFiles files;
-    private Job job;
+import se.llbit.chunky.renderer.scene.Scene;
 
-    public int getId() {
-        return id;
+public class Tile {
+    private int x;
+
+    private int y;
+
+    private int width;
+
+    private int height;
+
+    public int getX() {
+        return x;
     }
 
-    public int getSpp() {
-        return spp;
+    public int getY() {
+        return y;
     }
 
-    public Tile getTile() {
-        return tile;
+    public int getWidth() {
+        return width;
     }
 
-    public JobFiles getFiles() {
-        return files;
+    public int getHeight() {
+        return height;
     }
 
-    public Job getJob() {
-        return job;
+    public void applyToScene(Scene scene, int fullWidth, int fullHeight) {
+        scene.setCanvasCropSize(
+                getWidth(), getHeight(),
+                fullWidth, fullHeight,
+                getX(), getY()
+        );
     }
 }

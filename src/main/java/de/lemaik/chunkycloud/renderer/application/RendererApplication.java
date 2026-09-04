@@ -18,7 +18,7 @@
 package de.lemaik.chunkycloud.renderer.application;
 
 import de.lemaik.chunkycloud.renderer.Main;
-import de.lemaik.chunkycloud.renderer.rendering.RenderServerApiClient;
+import de.lemaik.chunkycloud.renderer.api.RenderServerApiClient;
 import de.lemaik.chunkycloud.renderer.rendering.RenderWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ import se.llbit.chunky.main.Version;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public abstract class RendererApplication {
+public class RendererApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(RendererApplication.class);
 
     private final RenderServerApiClient api;

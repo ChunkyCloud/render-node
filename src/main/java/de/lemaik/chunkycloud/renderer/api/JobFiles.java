@@ -15,9 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.chunkycloud.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.api;
 
 import java.util.List;
+import java.util.Optional;
 
 public class JobFiles {
     private File scene;
@@ -33,8 +34,8 @@ public class JobFiles {
         return octree;
     }
 
-    public File getEmittergrid() {
-        return emittergrid;
+    public Optional<File> getEmittergrid() {
+        return Optional.ofNullable(emittergrid);
     }
 
     public List<ResourcePack> getResourcePacks() {

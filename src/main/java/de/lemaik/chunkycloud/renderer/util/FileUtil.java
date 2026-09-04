@@ -29,7 +29,6 @@ import java.util.stream.Stream;
  * Contains static file utility methods.
  */
 public class FileUtil {
-
     /**
      * Deletes the given directory recursively.
      *

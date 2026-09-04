@@ -17,7 +17,7 @@
 
 package de.lemaik.chunkycloud.renderer.chunky;
 
-import de.lemaik.chunkycloud.renderer.rendering.Task;
+import de.lemaik.chunkycloud.renderer.api.Task;
 import se.llbit.chunky.renderer.DefaultRenderManager;
 import se.llbit.chunky.renderer.RenderStatus;
 import se.llbit.chunky.renderer.SnapshotControl;

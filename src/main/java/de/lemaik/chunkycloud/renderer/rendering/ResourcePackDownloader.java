@@ -17,6 +17,7 @@
 
 package de.lemaik.chunkycloud.renderer.rendering;
 
+import de.lemaik.chunkycloud.renderer.api.JobFiles;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

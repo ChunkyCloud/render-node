@@ -15,15 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.chunkycloud.renderer.application;
+package de.lemaik.chunkycloud.renderer.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class Task {
+    private int id;
+    private int spp;
+    private Tile tile;
+    private JobFiles files;
+    private Job job;
 
-public class HeadlessRenderer extends RendererApplication {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HeadlessRenderer.class);
+    public int getId() {
+        return id;
+    }
 
-    public HeadlessRenderer(RendererSettings settings) {
-        super(settings);
+    public int getSpp() {
+        return spp;
+    }
+
+    public Tile getTile() {
+        return tile;
+    }
+
+    public JobFiles getFiles() {
+        return files;
+    }
+
+    public Job getJob() {
+        return job;
     }
 }

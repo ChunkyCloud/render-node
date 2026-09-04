@@ -20,7 +20,7 @@ package de.lemaik.chunkycloud.renderer;
 import com.lexicalscope.jewel.cli.Cli;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.lemaik.chunkycloud.renderer.application.CommandlineArguments;
-import de.lemaik.chunkycloud.renderer.application.HeadlessRenderer;
+import de.lemaik.chunkycloud.renderer.application.RendererApplication;
 import de.lemaik.chunkycloud.renderer.application.RendererSettings;
 import de.lemaik.chunkycloud.renderer.chunky.FilteringLogReceiver;
 import de.lemaik.chunkycloud.renderer.chunky.Slf4jLogReceiver;
@@ -86,6 +86,6 @@ public class Main {
                 arguments.getMaxCacheSize(),
                 apiKey
         );
-        new HeadlessRenderer(settings).start();
+        new RendererApplication(settings).start();
     }
 }

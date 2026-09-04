@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 leMaik and contributors
+ * Copyright (C) 2016-2026 leMaik and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,25 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.chunkycloud.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.api;
 
-public class FinishTaskRenderingResponse {
-    private UploadUrls uploadUrls;
+public class Job {
+    private String id;
+    private int width;
+    private int height;
 
-    public UploadUrls getUploadUrls() {
-        return uploadUrls;
+    public String getId() {
+        return id;
     }
 
-    public static class UploadUrls {
-        private String image;
-        private String dump;
+    public int getWidth() {
+        return width;
+    }
 
-        public String getImage() {
-            return image;
-        }
-
-        public String getDump() {
-            return dump;
-        }
+    public int getHeight() {
+        return height;
     }
 }

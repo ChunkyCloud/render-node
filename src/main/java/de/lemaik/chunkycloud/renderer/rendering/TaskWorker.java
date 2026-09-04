@@ -18,6 +18,9 @@
 package de.lemaik.chunkycloud.renderer.rendering;
 
 import com.google.gson.Gson;
+import de.lemaik.chunkycloud.renderer.api.FinishTaskRenderingResponse;
+import de.lemaik.chunkycloud.renderer.api.RenderServerApiClient;
+import de.lemaik.chunkycloud.renderer.api.Task;
 import de.lemaik.chunkycloud.renderer.chunky.ChunkyWrapper;
 import de.lemaik.chunkycloud.renderer.chunky.RenderException;
 import de.lemaik.chunkycloud.renderer.util.FileUtil;
@@ -37,13 +40,11 @@ public class TaskWorker {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskWorker.class);
 
     private final Path workingDir;
-    private final Path texturepacksDir;
     private final ChunkyWrapper chunky;
     private final RenderServerApiClient apiClient;
 
-    public TaskWorker(Path workingDir, Path texturepacksDir, int threads, int cpuLoad, RenderServerApiClient apiClient) {
+    public TaskWorker(Path workingDir, int threads, int cpuLoad, RenderServerApiClient apiClient) {
         this.workingDir = workingDir;
-        this.texturepacksDir = texturepacksDir;
         this.chunky = new ChunkyWrapper(threads, cpuLoad);
         this.apiClient = apiClient;
     }
@@ -114,10 +115,10 @@ public class TaskWorker {
             LOGGER.info("Uploading...");
             try {
                 FinishTaskRenderingResponse.UploadUrls uploadUrls = apiClient.finishTaskRendering(task.getId()).get().getUploadUrls();
-                if (uploadUrls.getDump() != null) {
+                if (uploadUrls.getDump().isPresent()) {
                     try (Buffer dumpBuffer = new Buffer()) {
                         result.writeDump(dumpBuffer.outputStream());
-                        apiClient.uploadFile(uploadUrls.getDump(), dumpBuffer, "application/octet-stream").get();
+                        apiClient.uploadFile(uploadUrls.getDump().orElseThrow(), dumpBuffer, "application/octet-stream").get();
                     }
                 }
                 try (Buffer imageBuffer = new Buffer()) {

@@ -17,6 +17,9 @@
 
 package de.lemaik.chunkycloud.renderer.rendering;
 
+import de.lemaik.chunkycloud.renderer.api.JobFiles;
+import de.lemaik.chunkycloud.renderer.api.RenderServerApiClient;
+import de.lemaik.chunkycloud.renderer.api.Task;
 import de.lemaik.chunkycloud.renderer.chunky.RenderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +86,7 @@ public class RenderWorker extends Thread {
                         worker.cleanup();
                     }
                     taskPath.toFile().mkdir();
-                    worker = new TaskWorker(taskPath, resourcePacksPath, threads, cpuLoad, apiClient);
+                    worker = new TaskWorker(taskPath, threads, cpuLoad, apiClient);
                     worker.loadScene(task);
                     List<Integer> resourcePacks = task.getFiles().getResourcePacks().stream().map(JobFiles.ResourcePack::getId).toList();
                     if (!this.currentlyLoadedResourcepackIds.equals(resourcePacks)) {

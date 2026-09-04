@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.lemaik.chunkycloud.renderer.rendering;
+package de.lemaik.chunkycloud.renderer.api;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -246,7 +245,7 @@ public class RenderServerApiClient {
     }
 
     public CompletableFuture<File> downloadEmittergrid(Task job, File file) {
-        return Optional.ofNullable(job.getFiles().getEmittergrid())
+        return job.getFiles().getEmittergrid()
                 .map(s -> downloadFile(resolveUrl(s.getUrl()), file))
                 .orElseGet(() -> CompletableFuture.completedFuture(null));
     }
