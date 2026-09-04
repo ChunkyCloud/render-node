@@ -353,8 +353,22 @@ public class RenderServerApiClient {
     public CompletableFuture<Void> uploadFile(String url, Buffer body, String mimeType) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         uploadClient.newCall(new Request.Builder()
-                        .url(url)
-                        .put(RequestBody.create(body.readByteString(), MediaType.parse(mimeType)))
+                        .url(url).put(new RequestBody() {
+                            @Override
+                            public MediaType contentType() {
+                                return MediaType.parse(mimeType);
+                            }
+
+                            @Override
+                            public long contentLength() throws IOException {
+                                return body.size();
+                            }
+
+                            @Override
+                            public void writeTo(BufferedSink sink) throws IOException {
+                                sink.write(body, body.size());
+                            }
+                        })
                         .build()
                 )
                 .enqueue(new Callback() {
