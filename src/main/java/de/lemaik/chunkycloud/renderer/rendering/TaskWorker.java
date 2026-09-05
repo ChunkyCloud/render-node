@@ -94,7 +94,8 @@ public class TaskWorker {
 
             progressReportScheduler.scheduleAtFixedRate(() -> {
                 try {
-                    RenderServerApiClient.ProgressReportResult result = apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp()).get(3, TimeUnit.SECONDS);
+                    RenderServerApiClient.ProgressReportResult result = apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp(), chunky.getCurrentSps())
+                            .get(3, TimeUnit.SECONDS);
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
                         LOGGER.info("Render task {} has been aborted, interrupting renderer", task.getId());
                         renderFuture.cancel(true);

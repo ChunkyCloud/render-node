@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -168,11 +169,14 @@ public class RenderServerApiClient {
         return result;
     }
 
-    public CompletableFuture<ProgressReportResult> reportTaskProgress(int taskId, int spp) {
+    public CompletableFuture<ProgressReportResult> reportTaskProgress(int taskId, int spp, double sps) {
         CompletableFuture<ProgressReportResult> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
                         .url(baseUrl + "/nodes/me/tasks/" + taskId + "/progress")
-                        .post(RequestBody.create("{\"spp\":" + spp + "}", MediaType.parse("application/json")))
+                        .post(RequestBody.create(
+                                new Gson().toJson(Map.of("spp", spp, "sps", sps)),
+                                MediaType.parse("application/json")
+                        ))
                         .build())
                 .enqueue(new Callback() {
                     @Override

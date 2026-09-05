@@ -18,9 +18,7 @@
 package de.lemaik.chunkycloud.renderer.chunky;
 
 import de.lemaik.chunkycloud.renderer.api.Task;
-import se.llbit.chunky.renderer.DefaultRenderManager;
-import se.llbit.chunky.renderer.RenderStatus;
-import se.llbit.chunky.renderer.SnapshotControl;
+import se.llbit.chunky.renderer.*;
 import se.llbit.chunky.renderer.export.PictureExportFormats;
 import se.llbit.chunky.renderer.renderdump.RenderDump;
 import se.llbit.chunky.renderer.scene.Scene;
@@ -39,6 +37,7 @@ public class ChunkyWrapper {
     private final SynchronousSceneManager sceneManager;
     private final DefaultRenderManager renderer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private double currentSps = 0;
 
     public ChunkyWrapper(int threads, int cpuLoad) {
         context = new VoidRenderContext();
@@ -47,6 +46,24 @@ public class ChunkyWrapper {
         sceneManager = new SynchronousSceneManager(context, renderer);
         renderer.setCPULoad(cpuLoad);
         renderer.setSceneProvider(sceneManager);
+        renderer.addRenderListener(new RenderStatusListener() {
+            @Override
+            public void setRenderTime(long time) {
+            }
+
+            @Override
+            public void setSamplesPerSecond(int sps) {
+                currentSps = sps;
+            }
+
+            @Override
+            public void setSpp(int spp) {
+            }
+
+            @Override
+            public void renderStateChanged(RenderMode state) {
+            }
+        });
         renderer.setSnapshotControl(new SnapshotControl() {
             @Override
             public boolean saveSnapshot(Scene scene, int nextSpp) {
@@ -65,6 +82,7 @@ public class ChunkyWrapper {
     }
 
     public Future<RenderResult> render(Task task) throws InterruptedException {
+        currentSps = 0;
         return executor.submit(() -> {
             context.setSppPerPass(1);
             sceneManager.getScene().refresh();
@@ -76,6 +94,7 @@ public class ChunkyWrapper {
             sceneManager.getScene().startHeadlessRender();
             renderer.run();
 
+            currentSps = 0;
             RenderStatus status = renderer.getRenderStatus();
             Scene renderedScene = sceneManager.getScene();
             renderedScene.renderTime = status.getRenderTime();
@@ -100,7 +119,7 @@ public class ChunkyWrapper {
     }
 
     public double getCurrentSps() {
-        return 42; // TODO add render listener, keep result
+        return currentSps;
     }
 
     public abstract class RenderResult {
