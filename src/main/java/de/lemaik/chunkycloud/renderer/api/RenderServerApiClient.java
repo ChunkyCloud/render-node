@@ -115,7 +115,7 @@ public class RenderServerApiClient {
     public CompletableFuture<FinishTaskRenderingResponse> finishTaskRendering(int taskId) {
         CompletableFuture<FinishTaskRenderingResponse> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload").post(RequestBody.create(new byte[0]))
+                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload").post(RequestBody.EMPTY)
                         .build())
                 .enqueue(new Callback() {
                     @Override
@@ -144,7 +144,7 @@ public class RenderServerApiClient {
     public CompletableFuture<Void> finishTask(int taskId) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish").post(RequestBody.create(new byte[0]))
+                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish").post(RequestBody.EMPTY)
                         .build())
                 .enqueue(new Callback() {
                     @Override
