@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -108,7 +109,7 @@ public class RenderWorker extends Thread {
             } catch (InterruptedException e) {
                 LOGGER.info("Interrupted", e);
                 break;
-            } catch (ExecutionException | TimeoutException | IOException | RenderException e) {
+            } catch (ExecutionException | TimeoutException | IOException | RenderException | CompletionException e) {
                 LOGGER.error("Error", e);
                 try {
                     int delaySeconds = Math.min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds);
