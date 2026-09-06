@@ -45,7 +45,7 @@ public class RendererApplication {
                 settings.getApiUrl(), settings.getApiKey(),
                 settings.getCacheDirectory()
                         .orElse(Paths.get(System.getProperty("user.dir"), "cc_cache").toFile()),
-                settings.getMaxCacheSize().orElse(512L)
+                settings.getMaxCacheSize().orElse(512L) * 1024 * 1024
         );
     }
 
