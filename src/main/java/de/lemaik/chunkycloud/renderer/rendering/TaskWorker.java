@@ -57,22 +57,38 @@ public class TaskWorker {
           ? apiClient.downloadSkymapTo(job.getSkymapUrl().get(), workingDir).get().getAbsoluteFile()
           : null;*/ //TODO skymap
 
-        CompletableFuture.allOf(
-                apiClient.getScene(task).thenAccept((scene -> {
-                    scene.addProperty("name", "scene");
-                    if (skymap != null) {
-                        scene.getAsJsonObject("sky").addProperty("skymap", skymap.getAbsolutePath());
-                    }
-                    try (OutputStreamWriter out = new OutputStreamWriter(
-                            new FileOutputStream(new File(workingDir.toFile(), "scene.json")))) {
-                        new Gson().toJson(scene, out);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })),
-                apiClient.downloadOctree(task, new File(workingDir.toFile(), "scene.octree2")),
-                apiClient.downloadEmittergrid(task, new File(workingDir.toFile(), "scene.emittergrid"))
-        ).get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
+        CompletableFuture<Void> sceneDownload = CompletableFuture.runAsync(() -> {
+            try {
+                var scene = apiClient.getScene(task);
+                scene.addProperty("name", "scene");
+                if (skymap != null) {
+                    scene.getAsJsonObject("sky").addProperty("skymap", skymap.getAbsolutePath());
+                }
+                try (OutputStreamWriter out = new OutputStreamWriter(
+                        new FileOutputStream(new File(workingDir.toFile(), "scene.json")))) {
+                    new Gson().toJson(scene, out);
+                }
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        });
+        CompletableFuture<Void> octreeDownload = CompletableFuture.runAsync(() -> {
+            try {
+                apiClient.downloadOctree(task, new File(workingDir.toFile(), "scene.octree2"));
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        });
+        CompletableFuture<Void> emittergridDownload = CompletableFuture.runAsync(() -> {
+            try {
+                apiClient.downloadEmittergrid(task, new File(workingDir.toFile(), "scene.emittergrid"));
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        });
+
+        CompletableFuture.allOf(sceneDownload, octreeDownload, emittergridDownload)
+                .get(4, TimeUnit.HOURS); // timeout after 4 hours of downloading
 
         chunky.loadScene(new File(workingDir.toFile(), "scene.json"));
     }
@@ -94,13 +110,13 @@ public class TaskWorker {
 
             progressReportScheduler.scheduleAtFixedRate(() -> {
                 try {
-                    RenderServerApiClient.ProgressReportResult result = apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp(), chunky.getCurrentSps())
-                            .get(3, TimeUnit.SECONDS);
+                    RenderServerApiClient.ProgressReportResult result =
+                            apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp(), chunky.getCurrentSps());
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
                         LOGGER.info("Render task {} has been aborted, interrupting renderer", task.getId());
                         renderFuture.cancel(true);
                     }
-                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                } catch (IOException e) {
                     LOGGER.warn("Failed to report task progress", e);
                 }
             }, 0, 5, TimeUnit.SECONDS);
@@ -115,19 +131,19 @@ public class TaskWorker {
 
             LOGGER.info("Uploading...");
             try {
-                FinishTaskRenderingResponse.UploadUrls uploadUrls = apiClient.finishTaskRendering(task.getId()).get().getUploadUrls();
+                FinishTaskRenderingResponse.UploadUrls uploadUrls = apiClient.finishTaskRendering(task.getId()).getUploadUrls();
                 if (uploadUrls.getDump().isPresent()) {
                     try (Buffer dumpBuffer = new Buffer()) {
                         result.writeDump(dumpBuffer.outputStream());
-                        apiClient.uploadFile(uploadUrls.getDump().orElseThrow(), dumpBuffer, "application/octet-stream").get();
+                        apiClient.uploadFile(uploadUrls.getDump().orElseThrow(), dumpBuffer, "application/octet-stream");
                     }
                 }
                 try (Buffer imageBuffer = new Buffer()) {
                     result.writePngImage(imageBuffer.outputStream());
-                    apiClient.uploadFile(uploadUrls.getImage(), imageBuffer, "image/png").get();
+                    apiClient.uploadFile(uploadUrls.getImage(), imageBuffer, "image/png");
                 }
-                apiClient.finishTask(task.getId()).get();
-            } catch (InterruptedException | ExecutionException | IOException e) {
+                apiClient.finishTask(task.getId());
+            } catch (IOException e) {
                 throw new RenderException("Upload failed", e);
             }
             LOGGER.info("Done");

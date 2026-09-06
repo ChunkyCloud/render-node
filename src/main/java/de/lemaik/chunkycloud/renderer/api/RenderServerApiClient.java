@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RenderServerApiClient {
@@ -80,319 +79,202 @@ public class RenderServerApiClient {
                 .build();
     }
 
-    public CompletableFuture<Task> getNextTask() {
+    public Task getNextTask() throws IOException {
         // TODO add scheduler hints
-        CompletableFuture<Task> result = new CompletableFuture<>();
-        client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/next").get()
-                        .build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
+        Request request = new Request.Builder()
+                .url(baseUrl + "/nodes/me/tasks/next")
+                .get()
+                .build();
 
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.code() == 200) {
-                                try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
-                                    result.complete(gson.fromJson(reader, Task.class));
-                                } catch (IOException e) {
-                                    result.completeExceptionally(e);
-                                }
-                            } else if (response.code() == 204) {
-                                result.complete(null);
-                            } else {
-                                result.completeExceptionally(new IOException("The job could not be downloaded " + response.code()));
-                            }
-                        }
-                    }
-                });
-
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 200) {
+                try (
+                        ResponseBody body = requireBody(response, "task");
+                        InputStreamReader reader = new InputStreamReader(body.byteStream())
+                ) {
+                    return gson.fromJson(reader, Task.class);
+                }
+            } else if (response.code() == 204) {
+                return null;
+            }
+            throw new IOException("The job could not be downloaded, status " + response.code());
+        }
     }
 
-    public CompletableFuture<FinishTaskRenderingResponse> finishTaskRendering(int taskId) {
-        CompletableFuture<FinishTaskRenderingResponse> result = new CompletableFuture<>();
-        client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload").post(RequestBody.EMPTY)
-                        .build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
+    public FinishTaskRenderingResponse finishTaskRendering(int taskId) throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl + "/nodes/me/tasks/" + taskId + "/upload")
+                .post(RequestBody.EMPTY)
+                .build();
 
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.isSuccessful()) {
-                                try (InputStreamReader reader = new InputStreamReader(response.body().byteStream())) {
-                                    result.complete(gson.fromJson(reader, FinishTaskRenderingResponse.class));
-                                } catch (IOException e) {
-                                    result.completeExceptionally(e);
-                                }
-                            } else {
-                                result.completeExceptionally(new IOException("The task could not be finished"));
-                            }
-                        }
-                    }
-                });
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                try (
+                        ResponseBody body = requireBody(response, "task upload response");
+                        InputStreamReader reader = new InputStreamReader(body.byteStream())
+                ) {
+                    return gson.fromJson(reader, FinishTaskRenderingResponse.class);
+                }
+            }
+            throw new IOException("The task could not be finished, status " + response.code());
+        }
     }
 
-    public CompletableFuture<Void> finishTask(int taskId) {
-        CompletableFuture<Void> result = new CompletableFuture<>();
-        client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish").post(RequestBody.EMPTY)
-                        .build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
+    public void finishTask(int taskId) throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl + "/nodes/me/tasks/" + taskId + "/finish")
+                .post(RequestBody.EMPTY)
+                .build();
 
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.isSuccessful()) {
-                                result.complete(null);
-                            } else {
-                                result.completeExceptionally(new IOException("The task could not be finished, status " + response.code() + " " + response.body().string()));
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("The task could not be finished, status " + response.code());
+            }
+        }
     }
 
-    public CompletableFuture<ProgressReportResult> reportTaskProgress(int taskId, int spp, double sps) {
-        CompletableFuture<ProgressReportResult> result = new CompletableFuture<>();
-        client.newCall(new Request.Builder()
-                        .url(baseUrl + "/nodes/me/tasks/" + taskId + "/progress")
-                        .post(RequestBody.create(
-                                new Gson().toJson(Map.of("spp", spp, "sps", sps)),
-                                MediaType.parse("application/json")
-                        ))
-                        .build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
+    public ProgressReportResult reportTaskProgress(int taskId, int spp, double sps) throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl + "/nodes/me/tasks/" + taskId + "/progress")
+                .post(RequestBody.create(
+                        gson.toJson(Map.of("spp", spp, "sps", sps)),
+                        MediaType.parse("application/json")
+                ))
+                .build();
 
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.isSuccessful()) {
-                                result.complete(ProgressReportResult.OK);
-                            } else if (response.code() == 409) {
-                                result.complete(ProgressReportResult.STOP_RENDERING);
-                            } else {
-                                result.completeExceptionally(new IOException("The task progress could not be updated, status " + response.code() + " " + response.body().string()));
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+                return ProgressReportResult.OK;
+            } else if (response.code() == 409) {
+                return ProgressReportResult.STOP_RENDERING;
+            }
+            throw new IOException("The task progress could not be updated, status " + response.code());
+        }
     }
 
-    public CompletableFuture<JsonObject> getScene(Task job) {
-        CompletableFuture<JsonObject> result = new CompletableFuture<>();
+    public JsonObject getScene(Task job) throws IOException {
         JobFiles.File sceneFile = job.getFiles().getScene();
+        Request request = new Request.Builder()
+                .url(resolveUrl(sceneFile.getUrl()))
+                .removeHeader("Authorization")
+                .get()
+                .build();
 
-        client.newCall(new Request.Builder()
-                        .url(resolveUrl(sceneFile.getUrl()))
-                        .removeHeader("Authorization")
-                        .get().build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.code() == 200) {
-                                try (
-                                        ResponseBody body = response.body();
-                                        InputStreamReader reader = new InputStreamReader(body.byteStream())
-                                ) {
-                                    result.complete(gson.fromJson(reader, JsonObject.class));
-                                } catch (IOException e) {
-                                    result.completeExceptionally(e);
-                                }
-                            } else {
-                                result.completeExceptionally(new IOException("The scene could not be downloaded, status " + response.request().url() + " " + response.body().string()));
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 200) {
+                try (
+                        ResponseBody body = requireBody(response, "scene");
+                        InputStreamReader reader = new InputStreamReader(body.byteStream())
+                ) {
+                    return gson.fromJson(reader, JsonObject.class);
+                }
+            }
+            throw new IOException("The scene could not be downloaded, status " + response.request().url() + " " + response.code());
+        }
     }
 
     protected String resolveUrl(String relativeOrAbsoluteUrl) {
         return relativeOrAbsoluteUrl.startsWith("/") ? baseUrl + relativeOrAbsoluteUrl : relativeOrAbsoluteUrl;
     }
 
-    public CompletableFuture<File> downloadOctree(Task job, File file) {
+    public File downloadOctree(Task job, File file) throws IOException {
         return downloadFile(resolveUrl(job.getFiles().getOctree().getUrl()), file);
     }
 
-    public CompletableFuture<File> downloadEmittergrid(Task job, File file) {
-        return job.getFiles().getEmittergrid()
-                .map(s -> downloadFile(resolveUrl(s.getUrl()), file))
-                .orElseGet(() -> CompletableFuture.completedFuture(null));
+    public File downloadEmittergrid(Task job, File file) throws IOException {
+        if (job.getFiles().getEmittergrid().isEmpty()) {
+            return null;
+        }
+        return downloadFile(resolveUrl(job.getFiles().getEmittergrid().orElseThrow().getUrl()), file);
     }
 
-    public CompletableFuture<File> downloadSkymapTo(String url, Path targetDir) {
-        CompletableFuture<File> result = new CompletableFuture<>();
+    public File downloadSkymapTo(String url, Path targetDir) throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl + url)
+                .get()
+                .build();
 
-        client.newCall(new Request.Builder()
-                        .url(baseUrl + url).get().build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() != 200) {
+                throw new IOException("Download of " + url + " failed, status " + response.code());
+            }
+            String filename = response.header("X-Filename");
+            if (filename == null || filename.isBlank()) {
+                throw new IOException("Download of " + url + " did not include X-Filename");
+            }
 
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        if (response.code() == 200) {
-                            File file = new File(targetDir.toFile(), response.header("X-Filename"));
-                            File tmpFile = new File(file.getAbsolutePath() + ".tmp");
-
-                            try (
-                                    ResponseBody body = response.body();
-                                    BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
-                            ) {
-                                sink.writeAll(body.source());
-                            } catch (IOException e) {
-                                if (tmpFile.exists()) {
-                                    tmpFile.delete();
-                                }
-                                result.completeExceptionally(e);
-                                return;
-                            }
-                            try {
-                                if (!tmpFile.renameTo(file)) {
-                                    throw new IOException("Could not rename file " + tmpFile + " to " + file);
-                                }
-                                result.complete(file);
-                            } catch (IOException e) {
-                                if (tmpFile.exists()) {
-                                    tmpFile.delete();
-                                }
-                                result.completeExceptionally(e);
-                            }
-                        } else {
-                            response.close();
-                            result.completeExceptionally(new IOException("Download of " + url + " failed"));
-                        }
-                    }
-                });
-
-        return result;
+            File file = new File(targetDir.toFile(), filename);
+            File tmpFile = new File(file.getAbsolutePath() + ".tmp");
+            try {
+                try (
+                        ResponseBody body = requireBody(response, "skymap");
+                        BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
+                ) {
+                    sink.writeAll(body.source());
+                }
+                if (!tmpFile.renameTo(file)) {
+                    throw new IOException("Could not rename file " + tmpFile + " to " + file);
+                }
+                return file;
+            } catch (IOException e) {
+                if (tmpFile.exists()) {
+                    tmpFile.delete();
+                }
+                throw e;
+            }
+        }
     }
 
-    private CompletableFuture<File> downloadFile(String url, File file) {
+    private File downloadFile(String url, File file) throws IOException {
         File tmpFile = new File(file.getAbsolutePath() + ".tmp");
-        CompletableFuture<File> result = new CompletableFuture<>();
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
 
-        client.newCall(new Request.Builder()
-                        .url(url).get().build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response) {
-                        try (response) {
-                            if (response.code() == 200) {
-                                try (
-                                        ResponseBody body = response.body();
-                                        BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
-                                ) {
-                                    sink.writeAll(body.source());
-                                } catch (IOException e) {
-                                    if (tmpFile.exists()) {
-                                        tmpFile.delete();
-                                    }
-                                    result.completeExceptionally(e);
-                                    return;
-                                }
-                                try {
-                                    if (!tmpFile.renameTo(file)) {
-                                        throw new IOException("Could not rename file " + tmpFile + " to " + file);
-                                    }
-                                    result.complete(file);
-                                } catch (IOException e) {
-                                    if (tmpFile.exists()) {
-                                        tmpFile.delete();
-                                    }
-                                    result.completeExceptionally(e);
-                                }
-                            } else {
-                                result.completeExceptionally(new IOException("Download of " + url + " failed"));
-                            }
-                        }
-                    }
-                });
-
-        return result;
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() != 200) {
+                throw new IOException("Download of " + url + " failed, status " + response.code());
+            }
+            try {
+                try (
+                        ResponseBody body = requireBody(response, "download");
+                        BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
+                ) {
+                    sink.writeAll(body.source());
+                }
+                if (!tmpFile.renameTo(file)) {
+                    throw new IOException("Could not rename file " + tmpFile + " to " + file);
+                }
+                return file;
+            } catch (IOException e) {
+                if (tmpFile.exists()) {
+                    tmpFile.delete();
+                }
+                throw e;
+            }
+        }
     }
 
-    public CompletableFuture<Void> uploadFile(String url, Buffer body, String mimeType) {
-        CompletableFuture<Void> result = new CompletableFuture<>();
-        uploadClient.newCall(new Request.Builder()
-                        .url(url).put(new RequestBody() {
-                            @Override
-                            public MediaType contentType() {
-                                return MediaType.parse(mimeType);
-                            }
+    public void uploadFile(String url, Buffer body, String mimeType) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .put(RequestBody.create(body.snapshot(), MediaType.parse(mimeType)))
+                .build();
 
-                            @Override
-                            public long contentLength() throws IOException {
-                                return body.size();
-                            }
+        try (Response response = uploadClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Upload failed, status " + response.code());
+            }
+        }
+    }
 
-                            @Override
-                            public void writeTo(BufferedSink sink) throws IOException {
-                                sink.write(body, body.size());
-                            }
-                        })
-                        .build()
-                )
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        result.completeExceptionally(e);
-                    }
-
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        try (response) {
-                            if (response.isSuccessful()) {
-                                result.complete(null);
-                            } else {
-                                result.completeExceptionally(new IOException(
-                                        "Upload failed" + response.code() + " " + response.body().string()));
-                            }
-                        }
-                    }
-                });
-        return result;
+    private static ResponseBody requireBody(Response response, String description) throws IOException {
+        ResponseBody body = response.body();
+        if (body == null) {
+            throw new IOException("Empty response body for " + description);
+        }
+        return body;
     }
 
     public enum ProgressReportResult {

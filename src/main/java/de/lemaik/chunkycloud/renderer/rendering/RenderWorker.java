@@ -73,7 +73,7 @@ public class RenderWorker extends Thread {
             }
             LOGGER.info("Polling for new task");
             try {
-                Task task = apiClient.getNextTask().get();
+                Task task = apiClient.getNextTask();
                 if (task == null) {
                     iterationsWithoutTask++;
                     Thread.sleep(5000L);
@@ -112,14 +112,14 @@ public class RenderWorker extends Thread {
             } catch (ExecutionException | TimeoutException | IOException | RenderException | CompletionException e) {
                 LOGGER.error("Error", e);
                 try {
-                    int delaySeconds = Math.min(MAX_RESTART_DELAY_SECONDS, nextRestartDelaySeconds);
+                    int delaySeconds = nextRestartDelaySeconds;
                     LOGGER.info("Waiting {} seconds before trying again", delaySeconds);
                     Thread.sleep(delaySeconds * 1000L);
                 } catch (InterruptedException ex) {
                     LOGGER.info("Interrupted", e);
                     break;
                 }
-                nextRestartDelaySeconds *= 2;
+                nextRestartDelaySeconds = Math.min(nextRestartDelaySeconds * 2, MAX_RESTART_DELAY_SECONDS);
             }
 
             if (interrupted()) {
