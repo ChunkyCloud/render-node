@@ -31,7 +31,6 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -58,14 +57,13 @@ public class ResourcePackDownloader {
     }
 
     public List<Path> downloadResourcePacks(JobFiles jobFiles, Path directory) throws IOException {
-        List<Path> files = new ArrayList<>(jobFiles.getResourcePacks().size());
         Files.createDirectories(directory);
 
-        List<CompletableFuture<Void>> futures = jobFiles.getResourcePacks()
+        List<CompletableFuture<Path>> futures = jobFiles.getResourcePacks()
                 .stream()
-                .map(pack -> CompletableFuture.runAsync(() -> {
+                .map(pack -> CompletableFuture.supplyAsync(() -> {
                     try {
-                        files.add(downloadIfNeeded(pack, directory));
+                        return downloadIfNeeded(pack, directory);
                     } catch (IOException e) {
                         throw new CompletionException(e);
                     }
@@ -75,7 +73,9 @@ public class ResourcePackDownloader {
         CompletableFuture.allOf(
                 futures.toArray(new CompletableFuture[0])
         ).join();
-        return files;
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
     }
 
     private Path downloadIfNeeded(JobFiles.ResourcePack pack, Path directory) throws IOException {
