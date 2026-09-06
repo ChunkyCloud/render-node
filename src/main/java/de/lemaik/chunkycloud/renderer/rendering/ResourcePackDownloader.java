@@ -59,27 +59,22 @@ public class ResourcePackDownloader {
 
     public List<Path> downloadResourcePacks(JobFiles jobFiles, Path directory) throws IOException {
         List<Path> files = new ArrayList<>(jobFiles.getResourcePacks().size());
-        try {
-            Files.createDirectories(directory);
+        Files.createDirectories(directory);
 
-            List<CompletableFuture<Void>> futures = jobFiles.getResourcePacks()
-                    .stream()
-                    .map(pack -> CompletableFuture.runAsync(() -> {
-                        try {
-                            files.add(downloadIfNeeded(pack, directory));
-                        } catch (IOException e) {
-                            throw new CompletionException(e);
-                        }
-                    }, executor))
-                    .toList();
+        List<CompletableFuture<Void>> futures = jobFiles.getResourcePacks()
+                .stream()
+                .map(pack -> CompletableFuture.runAsync(() -> {
+                    try {
+                        files.add(downloadIfNeeded(pack, directory));
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                }, executor))
+                .toList();
 
-            CompletableFuture.allOf(
-                    futures.toArray(new CompletableFuture[0])
-            ).join();
-
-        } finally {
-            executor.shutdown();
-        }
+        CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+        ).join();
         return files;
     }
 
