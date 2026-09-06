@@ -77,7 +77,7 @@ You can use a Docker secret to specify the API key, just launch with `--api-key-
 > [!CAUTION]
 > Please **do not run customized render nodes against leMaik's ChunkyCloud server**. Your contributions are very welcome, but please test them against a local ChunkyCloud server instance.
 
-The project builds a self-contained jar file with its dependencies. You'll need Maven 3.
+The project builds a self-contained jar file with its dependencies.
 
 ```bash
 ./gradlew build
@@ -86,7 +86,7 @@ The project builds a self-contained jar file with its dependencies. You'll need 
 The runnable jar file is written to:
 
 ```text
-target/rendernode.jar
+build/libs/rendernode.jar
 ```
 
 The main entry point is
