@@ -39,6 +39,7 @@ public class RenderServerApiClient {
     private final String baseUrl;
     private final OkHttpClient client;
     private final OkHttpClient uploadClient;
+    private final OkHttpClient shutdownClient;
 
     public RenderServerApiClient(String baseUrl, String apiKey, File cacheDirectory,
                                  long maxCacheSize) {
@@ -75,6 +76,11 @@ public class RenderServerApiClient {
                         TimeUnit.SECONDS)
                 .readTimeout(
                         Integer.parseInt(System.getProperty("chunkycloud.http.uploadReadTimeout", "10")),
+                        TimeUnit.SECONDS)
+                .build();
+        shutdownClient = client.newBuilder()
+                .callTimeout(
+                        Integer.parseInt(System.getProperty("chunkycloud.http.shutdownTimeout", "5")),
                         TimeUnit.SECONDS)
                 .build();
     }
@@ -129,6 +135,19 @@ public class RenderServerApiClient {
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException("The task could not be finished, status " + response.code());
+            }
+        }
+    }
+
+    public void notifyRenderNodeShutdown() throws IOException {
+        Request request = new Request.Builder()
+                .url(baseUrl + "/nodes/me/shutdown")
+                .post(RequestBody.EMPTY)
+                .build();
+
+        try (Response response = shutdownClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("The render node shutdown could not be reported, status " + response.code());
             }
         }
     }
@@ -267,6 +286,11 @@ public class RenderServerApiClient {
                 throw new IOException("Upload failed, status " + response.code());
             }
         }
+    }
+
+    public void cancelRequests() {
+        client.dispatcher().cancelAll();
+        uploadClient.dispatcher().cancelAll();
     }
 
     private static ResponseBody requireBody(Response response, String description) throws IOException {

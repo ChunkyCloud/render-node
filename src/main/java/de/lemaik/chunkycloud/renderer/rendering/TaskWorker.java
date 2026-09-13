@@ -124,7 +124,11 @@ public class TaskWorker {
             ChunkyWrapper.RenderResult result;
             try {
                 result = renderFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException e) {
+                renderFuture.cancel(true);
+                Thread.currentThread().interrupt();
+                throw new RenderException("Rendering interrupted", e);
+            } catch (ExecutionException e) {
                 throw new RenderException("Rendering failed", e);
             }
             rendering.set(false);

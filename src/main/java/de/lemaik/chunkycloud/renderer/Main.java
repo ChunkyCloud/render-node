@@ -86,6 +86,18 @@ public class Main {
                 arguments.getMaxCacheSize(),
                 apiKey
         );
-        new RendererApplication(settings).start();
+        RendererApplication application = new RendererApplication(settings);
+        Thread shutdownHook = new Thread(application::stop, "render-node-shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
+        try {
+            application.start();
+        } finally {
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException ignored) {
+                // JVM shutdown already started, the hook is either running or about to run
+            }
+        }
     }
 }

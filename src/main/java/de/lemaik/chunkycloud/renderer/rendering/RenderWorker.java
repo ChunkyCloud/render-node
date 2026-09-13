@@ -110,6 +110,10 @@ public class RenderWorker extends Thread {
                 LOGGER.info("Interrupted", e);
                 break;
             } catch (ExecutionException | TimeoutException | IOException | RenderException | CompletionException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.info("Interrupted", e);
+                    break;
+                }
                 LOGGER.error("Error", e);
                 try {
                     int delaySeconds = nextRestartDelaySeconds;
@@ -126,11 +130,8 @@ public class RenderWorker extends Thread {
                 break;
             }
         }
-        // TODO notify api that we were interrupted
-
         if (worker != null) {
             worker.cleanup();
-            worker = null;
         }
     }
 }

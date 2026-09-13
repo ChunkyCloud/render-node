@@ -26,14 +26,17 @@ import se.llbit.chunky.JsonSettings;
 import se.llbit.chunky.PersistentSettings;
 import se.llbit.chunky.main.Version;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RendererApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(RendererApplication.class);
 
     private final RenderServerApiClient api;
     private final RendererSettings settings;
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
     private Path jobDirectory;
     private Path resourcePacksPath;
 
@@ -86,8 +89,8 @@ public class RendererApplication {
             worker.join();
         } catch (InterruptedException e) {
             LOGGER.warn("Worker interrupted", e);
+            Thread.currentThread().interrupt();
         }
-        System.exit(0);
     }
 
     public RendererSettings getSettings() {
@@ -95,13 +98,26 @@ public class RendererApplication {
     }
 
     public void stop() {
+        if (!stopping.compareAndSet(false, true)) {
+            return;
+        }
+        if (worker == null) {
+            return;
+        }
         try {
             LOGGER.info("Waiting for worker to stop...");
             worker.interrupt();
+            api.cancelRequests();
+            try {
+                api.notifyRenderNodeShutdown();
+            } catch (IOException e) {
+                LOGGER.warn("Failed to report render node shutdown", e);
+            }
             worker.join();
             LOGGER.info("Worker stopped");
         } catch (InterruptedException e) {
             LOGGER.error("Could not gracefully stop the renderer");
+            Thread.currentThread().interrupt();
         }
     }
 }
