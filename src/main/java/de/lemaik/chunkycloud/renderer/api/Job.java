@@ -17,10 +17,13 @@
 
 package de.lemaik.chunkycloud.renderer.api;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Job {
     private String id;
     private int width;
     private int height;
+    private SkyMode skyMode;
 
     public String getId() {
         return id;
@@ -32,5 +35,17 @@ public class Job {
 
     public int getHeight() {
         return height;
+    }
+
+    public SkyMode getSkyMode() {
+        return skyMode;
+    }
+
+    public enum SkyMode {
+        @SerializedName("skymap")
+        SKYMAP,
+
+        @SerializedName("skybox")
+        SKYBOX
     }
 }

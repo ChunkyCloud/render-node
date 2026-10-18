@@ -29,7 +29,6 @@ import se.llbit.chunky.main.Version;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -207,44 +206,7 @@ public class RenderServerApiClient {
         return downloadFile(resolveUrl(job.getFiles().getEmittergrid().orElseThrow().getUrl()), file);
     }
 
-    public File downloadSkymapTo(String url, Path targetDir) throws IOException {
-        Request request = new Request.Builder()
-                .url(baseUrl + url)
-                .get()
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (response.code() != 200) {
-                throw new IOException("Download of " + url + " failed, status " + response.code());
-            }
-            String filename = response.header("X-Filename");
-            if (filename == null || filename.isBlank()) {
-                throw new IOException("Download of " + url + " did not include X-Filename");
-            }
-
-            File file = new File(targetDir.toFile(), filename);
-            File tmpFile = new File(file.getAbsolutePath() + ".tmp");
-            try {
-                try (
-                        ResponseBody body = requireBody(response, "skymap");
-                        BufferedSink sink = Okio.buffer(Okio.sink(tmpFile))
-                ) {
-                    sink.writeAll(body.source());
-                }
-                if (!tmpFile.renameTo(file)) {
-                    throw new IOException("Could not rename file " + tmpFile + " to " + file);
-                }
-                return file;
-            } catch (IOException e) {
-                if (tmpFile.exists()) {
-                    tmpFile.delete();
-                }
-                throw e;
-            }
-        }
-    }
-
-    private File downloadFile(String url, File file) throws IOException {
+    public File downloadFile(String url, File file) throws IOException {
         File tmpFile = new File(file.getAbsolutePath() + ".tmp");
         Request request = new Request.Builder()
                 .url(url)

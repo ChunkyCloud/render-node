@@ -18,9 +18,8 @@
 package de.lemaik.chunkycloud.renderer.rendering;
 
 import com.google.gson.Gson;
-import de.lemaik.chunkycloud.renderer.api.FinishTaskRenderingResponse;
-import de.lemaik.chunkycloud.renderer.api.RenderServerApiClient;
-import de.lemaik.chunkycloud.renderer.api.Task;
+import com.google.gson.JsonArray;
+import de.lemaik.chunkycloud.renderer.api.*;
 import de.lemaik.chunkycloud.renderer.chunky.ChunkyWrapper;
 import de.lemaik.chunkycloud.renderer.chunky.RenderException;
 import de.lemaik.chunkycloud.renderer.util.FileUtil;
@@ -49,20 +48,33 @@ public class TaskWorker {
         this.apiClient = apiClient;
     }
 
+    private File downloadSceneFile(JobFiles.NamedFile namedFile) throws IOException {
+        File file = new File(workingDir.toFile(), namedFile.getFilename());
+        apiClient.downloadFile(namedFile.getUrl(), file);
+        return file;
+    }
+
     public void loadScene(Task task) throws ExecutionException, InterruptedException, TimeoutException, IOException {
         LOGGER.info("Loading scene for task {} for job {}", task.getId(), task.getJob().getId());
 
         LOGGER.info("Downloading scene files...");
-        final File skymap = null; /*job.getSkymapUrl().isPresent()
-          ? apiClient.downloadSkymapTo(job.getSkymapUrl().get(), workingDir).get().getAbsoluteFile()
-          : null;*/ //TODO skymap
 
         CompletableFuture<Void> sceneDownload = CompletableFuture.runAsync(() -> {
             try {
                 var scene = apiClient.getScene(task);
                 scene.addProperty("name", "scene");
-                if (skymap != null) {
-                    scene.getAsJsonObject("sky").addProperty("skymap", skymap.getAbsolutePath());
+                if (task.getJob().getSkyMode() == Job.SkyMode.SKYMAP) {
+                    scene.getAsJsonObject("sky")
+                            .addProperty("skymap", downloadSceneFile(task.getFiles().getSkymap()).getAbsolutePath());
+                } else if (task.getJob().getSkyMode() == Job.SkyMode.SKYBOX) {
+                    JsonArray skyboxPaths = new JsonArray(6);
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxTop()).getAbsolutePath());
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxBottom()).getAbsolutePath());
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxFront()).getAbsolutePath());
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxBack()).getAbsolutePath());
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxRight()).getAbsolutePath());
+                    skyboxPaths.add(downloadSceneFile(task.getFiles().getSkyboxLeft()).getAbsolutePath());
+                    scene.getAsJsonObject("sky").add("skybox", skyboxPaths);
                 }
                 try (OutputStreamWriter out = new OutputStreamWriter(
                         new FileOutputStream(new File(workingDir.toFile(), "scene.json")))) {

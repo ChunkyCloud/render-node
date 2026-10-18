@@ -25,6 +25,13 @@ public class JobFiles {
     private File octree;
     private File emittergrid;
     private List<ResourcePack> resourcePacks;
+    private NamedFile skymap;
+    private NamedFile skyboxFront;
+    private NamedFile skyboxBack;
+    private NamedFile skyboxLeft;
+    private NamedFile skyboxRight;
+    private NamedFile skyboxTop;
+    private NamedFile skyboxBottom;
 
     public File getScene() {
         return scene;
@@ -42,11 +49,47 @@ public class JobFiles {
         return resourcePacks;
     }
 
+    public NamedFile getSkymap() {
+        return skymap;
+    }
+
+    public NamedFile getSkyboxFront() {
+        return skyboxFront;
+    }
+
+    public NamedFile getSkyboxBack() {
+        return skyboxBack;
+    }
+
+    public NamedFile getSkyboxLeft() {
+        return skyboxLeft;
+    }
+
+    public NamedFile getSkyboxRight() {
+        return skyboxRight;
+    }
+
+    public NamedFile getSkyboxTop() {
+        return skyboxTop;
+    }
+
+    public NamedFile getSkyboxBottom() {
+        return skyboxBottom;
+    }
+
     public static class File {
         private String url;
 
         public String getUrl() {
             return url;
+        }
+    }
+
+    public static class NamedFile extends File {
+        private String filename;
+
+        public String getFilename() {
+            return filename;
         }
     }
 
