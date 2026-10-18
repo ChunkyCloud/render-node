@@ -35,7 +35,7 @@ marks the task as finished.
 | `--api-key`            | unset                        | Render-node API key                                                   |
 | `--api-key-file`       | unset                        | File containing the render-node API key. Useful for container secrets |
 | `--cpu-load`           | `100`                        | Maximum Chunky CPU load                                               |
-| `-t`, `--thread-count` | `2`                          | Number of render threads used by Chunky                               |
+| `-t`, `--thread-count` | Number of CPU cores          | Number of render threads used by Chunky                               |
 | `--job-path`           | `./cc_jobs`                  | Directory for temporary per-task data                                 |
 | `--texturepacks-path`  | `./cc_texturepacks`          | Directory for downloaded resource packs                               |
 | `--cache-directory`    | `./cc_cache`                 | HTTP cache directory for downloaded scene resources                   |
