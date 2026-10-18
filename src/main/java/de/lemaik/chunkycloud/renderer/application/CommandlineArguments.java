@@ -57,7 +57,7 @@ public interface CommandlineArguments {
     File getCacheDirectory();
 
     @Option(longName = "max-cache-size",
-            description = "maximum cache size, in mb",
+            description = "maximum cache size, in megabytes",
             defaultToNull = true)
     Long getMaxCacheSize();
 
@@ -70,4 +70,9 @@ public interface CommandlineArguments {
             description = "Path of a file that contains the API Key (e.g. for container secrets)",
             defaultToNull = true)
     String getApiKeyFile();
+
+    @Option(longName = "advertised-memory",
+            description = "Memory limit advertised to the scheduler, in megabytes. The render node will only be assigned jobs whose declared memory requirements do not exceed this value. If omitted or set to `0`, no memory-based filtering is applied.",
+            defaultToNull = true)
+    Integer getAdvertisedMemory();
 }

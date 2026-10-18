@@ -83,7 +83,7 @@ public class RendererApplication {
 
         worker = new RenderWorker(getSettings().getThreads().orElse(Runtime.getRuntime().availableProcessors()),
                 getSettings().getCpuLoad().orElse(100),
-                jobDirectory, resourcePacksPath, api);
+                jobDirectory, resourcePacksPath, api, getSettings().getAdvertisedMemory().orElse(0));
         worker.start();
         try {
             worker.join();

@@ -84,10 +84,10 @@ public class RenderServerApiClient {
                 .build();
     }
 
-    public Task getNextTask() throws IOException {
+    public Task getNextTask(int memoryLimit) throws IOException {
         // TODO add scheduler hints
         Request request = new Request.Builder()
-                .url(baseUrl + "/nodes/me/tasks/next")
+                .url(baseUrl + "/nodes/me/tasks/next?memoryLimit=" + memoryLimit)
                 .get()
                 .build();
 

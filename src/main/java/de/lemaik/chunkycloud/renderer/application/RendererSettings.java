@@ -33,9 +33,10 @@ public class RendererSettings {
     private File cacheDirectory;
     private Long maxCacheSize;
     private final String apiKey;
+    private Integer advertisedMemory;
 
     public RendererSettings(Integer cpuLoad, Integer threads, File jobPath, File texturepacksPath,
-                            String apiUrl, File cacheDirectory, Long maxCacheSize, String apiKey) {
+                            String apiUrl, File cacheDirectory, Long maxCacheSize, String apiKey, Integer advertisedMemory) {
         this.cpuLoad = cpuLoad;
         this.threads = threads;
         this.jobPath = jobPath;
@@ -76,5 +77,9 @@ public class RendererSettings {
 
     public String getApiKey() {
         return apiKey;
+    }
+
+    public Optional<Integer> getAdvertisedMemory() {
+        return Optional.ofNullable(advertisedMemory);
     }
 }

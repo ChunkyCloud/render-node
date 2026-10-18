@@ -84,7 +84,8 @@ public class Main {
                 arguments.getApiUrl(),
                 arguments.getCacheDirectory(),
                 arguments.getMaxCacheSize(),
-                apiKey
+                apiKey,
+                arguments.getAdvertisedMemory()
         );
         RendererApplication application = new RendererApplication(settings);
         Thread shutdownHook = new Thread(application::stop, "render-node-shutdown");

@@ -48,16 +48,18 @@ public class RenderWorker extends Thread {
     private final int cpuLoad;
     private final int MAX_RESTART_DELAY_SECONDS = 15 * 60; // 15 minutes
     private final RenderServerApiClient apiClient;
+    private final int advertisedMemory;
     private int nextRestartDelaySeconds = 1;
     private List<Integer> currentlyLoadedResourcepackIds = Collections.emptyList();
 
     public RenderWorker(int threads, int cpuLoad, Path jobDirectory,
-                        Path texturepacksDirectory, RenderServerApiClient apiClient) {
+                        Path texturepacksDirectory, RenderServerApiClient apiClient, int advertisedMemory) {
         this.threads = threads;
         this.cpuLoad = cpuLoad;
         this.resourcePacksPath = texturepacksDirectory;
         this.jobDirectory = jobDirectory;
         this.apiClient = apiClient;
+        this.advertisedMemory = advertisedMemory;
     }
 
     @Override
@@ -73,7 +75,7 @@ public class RenderWorker extends Thread {
             }
             LOGGER.info("Polling for new task");
             try {
-                Task task = apiClient.getNextTask();
+                Task task = apiClient.getNextTask(advertisedMemory);
                 if (task == null) {
                     iterationsWithoutTask++;
                     Thread.sleep(5000L);
