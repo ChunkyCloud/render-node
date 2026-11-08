@@ -122,8 +122,12 @@ public class TaskWorker {
 
             progressReportScheduler.scheduleAtFixedRate(() -> {
                 try {
+                    int spp = chunky.getCurrentSpp();
+                    double sps = chunky.getCurrentSps();
+                    LOGGER.info("Render task {} for job {}: {} samples per pixel, {} samples per second",
+                            task.getId(), task.getJob().getId(), spp, sps);
                     RenderServerApiClient.ProgressReportResult result =
-                            apiClient.reportTaskProgress(task.getId(), chunky.getCurrentSpp(), chunky.getCurrentSps());
+                            apiClient.reportTaskProgress(task.getId(), spp, sps);
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
                         LOGGER.info("Render task {} has been aborted, interrupting renderer", task.getId());
                         renderFuture.cancel(true);
