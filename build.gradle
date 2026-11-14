@@ -58,7 +58,10 @@ shadowJar {
         )
     }
 
-    exclude('textures/**')
+    exclude { details ->
+        // textures/water-height.png is used for Chunky's TILED_NORMALMAP water shading strategy
+        details.path.startsWith('textures/') && details.path != 'textures/water-height.png'
+    }
     exclude('icons/**')
     exclude("META-INF/*.kotlin_module")
 
