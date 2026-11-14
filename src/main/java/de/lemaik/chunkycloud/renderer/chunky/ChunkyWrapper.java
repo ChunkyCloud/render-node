@@ -122,6 +122,10 @@ public class ChunkyWrapper {
         return currentSps;
     }
 
+    public void shutdown() {
+        executor.shutdown();
+    }
+
     public abstract class RenderResult {
         private RenderResult() {
         }

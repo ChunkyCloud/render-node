@@ -173,6 +173,7 @@ public class TaskWorker {
     }
 
     public void cleanup() {
+        chunky.shutdown();
         try {
             LOGGER.info("Deleting task working directory {}", workingDir);
             FileUtil.deleteDirectory(workingDir);
