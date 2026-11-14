@@ -25,7 +25,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
-    implementation 'se.llbit:chunky-core:2.5.0-SNAPSHOT.483.gf10ef3f'
+    implementation 'se.llbit:chunky-core:2.5.0-SNAPSHOT.489.g891d6ad'
     implementation 'org.apache.commons:commons-math3:3.2'
     implementation 'it.unimi.dsi:fastutil:8.4.4'
 
