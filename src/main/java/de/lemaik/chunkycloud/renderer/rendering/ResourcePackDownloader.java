@@ -91,19 +91,19 @@ public class ResourcePackDownloader {
         // remove incomplete previous download
         Files.deleteIfExists(temp);
 
-        LOGGER.info("Downloading {}", pack.getId());
+        LOGGER.info("Downloading resource pack {}", pack.getId());
         Request request = new Request.Builder()
                 .url(pack.getUrl())
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException(
-                        "HTTP " + response.code() + " while downloading " + pack.getId()
+                        "HTTP " + response.code() + " while downloading resource pack " + pack.getId()
                 );
             }
             if (response.body() == null) {
                 throw new IOException(
-                        "Empty response body for " + pack.getId()
+                        "Empty response body for resource pack " + pack.getId()
                 );
             }
             try (BufferedSink bufferedSink = Okio.buffer(Okio.sink(temp))) {
@@ -115,10 +115,10 @@ public class ResourcePackDownloader {
                 // fallback for filesystems that don't support atomic moves
                 Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
             }
-            LOGGER.info("Finished downloading {}", pack.getId());
+            LOGGER.info("Finished downloading resource pack {}", pack.getId());
             return target;
         } catch (Exception e) {
-            LOGGER.error("Failed to download {}", pack.getId());
+            LOGGER.error("Failed to download resource pack {}", pack.getId());
             // cleanup broken download
             Files.deleteIfExists(temp);
             throw e;
