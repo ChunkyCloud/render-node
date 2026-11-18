@@ -17,17 +17,19 @@
 
 package de.lemaik.chunkycloud.renderer.chunky;
 
+import com.google.gson.Gson;
 import de.lemaik.chunkycloud.renderer.api.Task;
 import se.llbit.chunky.renderer.*;
 import se.llbit.chunky.renderer.export.PictureExportFormats;
 import se.llbit.chunky.renderer.renderdump.RenderDump;
 import se.llbit.chunky.renderer.scene.Scene;
 import se.llbit.chunky.renderer.scene.SynchronousSceneManager;
+import se.llbit.log.Level;
+import se.llbit.log.Log;
 import se.llbit.util.TaskTracker;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -118,6 +120,10 @@ public class ChunkyWrapper {
         return renderer.getRenderStatus().getSpp();
     }
 
+    public int getTargetSpp() {
+        return sceneManager.getScene().getTargetSpp();
+    }
+
     public double getCurrentSps() {
         return currentSps;
     }
@@ -133,5 +139,34 @@ public class ChunkyWrapper {
         public abstract void writePngImage(OutputStream outputStream) throws IOException;
 
         public abstract void writeDump(OutputStream outputStream) throws IOException;
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+        Log.setReceiver(new FilteringLogReceiver(new Slf4jLogReceiver()), Level.ERROR, Level.WARNING, Level.INFO);
+        ChunkyWrapper wrapper = new ChunkyWrapper(Runtime.getRuntime().availableProcessors(), 100);
+        File sceneFile = new File("/home/maik/chunkycloud/test-scenes/debug/scene.json");
+        wrapper.loadScene(sceneFile);
+        System.out.println("octree depth " +
+                wrapper.sceneManager.getScene().getWorldOctree().getDepth());
+        Task task = new Gson().fromJson("""
+                {
+                    "spp": 2,
+                    "tile": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 400,
+                        "height": 400
+                    },
+                    "job": {
+                        "width": 400,
+                        "height": 400
+                    }
+                }
+                """, Task.class);
+        RenderResult result = wrapper.render(task).get();
+        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(sceneFile.getAbsolutePath() + ".png"))) {
+            result.writePngImage(out);
+        }
+        wrapper.shutdown();
     }
 }

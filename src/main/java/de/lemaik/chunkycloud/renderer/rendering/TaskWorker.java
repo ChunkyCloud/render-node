@@ -124,8 +124,8 @@ public class TaskWorker {
                 try {
                     int spp = chunky.getCurrentSpp();
                     double sps = chunky.getCurrentSps();
-                    LOGGER.info("Render task {} for job {}: {} samples per pixel, {} samples per second",
-                            task.getId(), task.getJob().getId(), spp, sps);
+                    LOGGER.info("Render task {} for job {}: {} of {} samples per pixel ({} %), {} samples per second",
+                            task.getId(), task.getJob().getId(), spp, chunky.getTargetSpp(), (double) spp / chunky.getTargetSpp() * 100, sps);
                     RenderServerApiClient.ProgressReportResult result =
                             apiClient.reportTaskProgress(task.getId(), spp, sps);
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
