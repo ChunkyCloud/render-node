@@ -37,7 +37,7 @@ import java.util.Optional;
  */
 public class Main {
     public static final String VERSION;
-    public static final int VERSION_CODE = 7;
+    public static final int VERSION_CODE = 8;
 
     static {
         String version = Main.class.getPackage().getImplementationVersion();
