@@ -44,6 +44,17 @@ marks the task as finished.
 
 The API key can also be provided through the `API_KEY` environment variable.
 
+## Shutdown
+
+The first `SIGINT` (Ctrl+C) requests a soft shutdown: the node finishes its current task,
+including uploading the result, then reports its shutdown and exits without
+polling for another task. A second `SIGINT` interrupts the worker and cancels
+pending HTTP requests. `SIGTERM` interrupts immediately.
+
+Soft shutdown requires the JDK's optional `sun.misc.Signal` API. If it is unavailable
+or the handler cannot be registered, the node logs a warning and Ctrl+C interrupts
+immediately instead.
+
 ## Runtime directories
 
 When no custom paths are provided, the render node creates these directories in

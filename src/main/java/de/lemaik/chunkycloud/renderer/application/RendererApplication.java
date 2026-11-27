@@ -37,10 +37,11 @@ public class RendererApplication {
     private final RenderServerApiClient api;
     private final RendererSettings settings;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
+    private final AtomicBoolean softStopRequested = new AtomicBoolean(false);
     private Path jobDirectory;
     private Path resourcePacksPath;
 
-    private RenderWorker worker;
+    private volatile RenderWorker worker;
 
     public RendererApplication(RendererSettings settings) {
         this.settings = settings;
@@ -84,6 +85,9 @@ public class RendererApplication {
         worker = new RenderWorker(getSettings().getThreads().orElse(Runtime.getRuntime().availableProcessors()),
                 getSettings().getCpuLoad().orElse(100),
                 jobDirectory, resourcePacksPath, api, getSettings().getAdvertisedMemory().orElse(0));
+        if (softStopRequested.get()) {
+            worker.requestSoftStop();
+        }
         worker.start();
         try {
             worker.join();
@@ -95,6 +99,15 @@ public class RendererApplication {
 
     public RendererSettings getSettings() {
         return settings;
+    }
+
+    public void requestSoftStop() {
+        softStopRequested.set(true);
+        LOGGER.info("Soft shutdown requested: finishing the current task, then stopping. Press Ctrl+C again to interrupt.");
+        RenderWorker currentWorker = worker;
+        if (currentWorker != null) {
+            currentWorker.requestSoftStop();
+        }
     }
 
     public void stop() {

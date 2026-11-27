@@ -51,6 +51,7 @@ public class RenderWorker extends Thread {
     private final int advertisedMemory;
     private int nextRestartDelaySeconds = 1;
     private List<Integer> currentlyLoadedResourcepackIds = Collections.emptyList();
+    private volatile boolean softStopRequested;
 
     public RenderWorker(int threads, int cpuLoad, Path jobDirectory,
                         Path texturepacksDirectory, RenderServerApiClient apiClient, int advertisedMemory) {
@@ -62,13 +63,17 @@ public class RenderWorker extends Thread {
         this.advertisedMemory = advertisedMemory;
     }
 
+    public void requestSoftStop() {
+        softStopRequested = true;
+    }
+
     @Override
     public void run() {
         TaskWorker worker = null;
         String previousJobId = null;
         int iterationsWithoutTask = 0;
 
-        while (!interrupted()) {
+        while (!softStopRequested && !interrupted()) {
             if (iterationsWithoutTask > 2 && worker != null) {
                 worker.cleanup();
                 worker = null;
@@ -77,6 +82,9 @@ public class RenderWorker extends Thread {
             try {
                 Task task = apiClient.getNextTask(advertisedMemory);
                 if (task == null) {
+                    if (softStopRequested) {
+                        break;
+                    }
                     iterationsWithoutTask++;
                     Thread.sleep(5000L);
                     continue;
@@ -117,6 +125,9 @@ public class RenderWorker extends Thread {
                     break;
                 }
                 LOGGER.error("Error", e);
+                if (softStopRequested) {
+                    break;
+                }
                 try {
                     int delaySeconds = nextRestartDelaySeconds;
                     LOGGER.info("Waiting {} seconds before trying again", delaySeconds);

@@ -24,18 +24,23 @@ import de.lemaik.chunkycloud.renderer.application.RendererApplication;
 import de.lemaik.chunkycloud.renderer.application.RendererSettings;
 import de.lemaik.chunkycloud.renderer.chunky.FilteringLogReceiver;
 import de.lemaik.chunkycloud.renderer.chunky.Slf4jLogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.llbit.log.Level;
 import se.llbit.log.Log;
+import sun.misc.Signal;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The main class.
  */
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static final String VERSION;
     public static final int VERSION_CODE = 8;
 
@@ -90,15 +95,39 @@ public class Main {
         RendererApplication application = new RendererApplication(settings);
         Thread shutdownHook = new Thread(application::stop, "render-node-shutdown");
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        try {
+            InterruptHandler.register(application::requestSoftStop);
+        } catch (LinkageError | IllegalArgumentException | SecurityException e) {
+            LOGGER.warn("Soft shutdown via Ctrl+C (SIGINT) is unavailable; Ctrl+C (SIGINT) will interrupt immediately ({})", e.toString());
+        }
 
         try {
             application.start();
         } finally {
+            application.stop();
             try {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);
             } catch (IllegalStateException ignored) {
                 // JVM shutdown already started, the hook is either running or about to run
             }
+        }
+        // Resource-pack downloader threads may still be alive after a soft shutdown.
+        System.exit(0);
+    }
+
+    // Load the optional JDK signal API only when registering the handler, so missing
+    // classes or methods can be handled without preventing Main from loading.
+    private static final class InterruptHandler {
+        private static void register(Runnable softStop) {
+            AtomicBoolean interruptRequested = new AtomicBoolean(false);
+            Signal.handle(new Signal("INT"), signal -> {
+                if (interruptRequested.compareAndSet(false, true)) {
+                    softStop.run();
+                } else {
+                    // Start the regular JVM shutdown, including the interrupting shutdown hook.
+                    System.exit(128 + signal.getNumber());
+                }
+            });
         }
     }
 }
