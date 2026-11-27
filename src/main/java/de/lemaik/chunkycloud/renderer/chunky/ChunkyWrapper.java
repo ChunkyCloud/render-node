@@ -39,6 +39,7 @@ public class ChunkyWrapper {
     private final SynchronousSceneManager sceneManager;
     private final DefaultRenderManager renderer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private volatile int currentSpp = 0;
     private volatile int currentSps = 0;
 
     public ChunkyWrapper(int threads, int cpuLoad) {
@@ -60,6 +61,7 @@ public class ChunkyWrapper {
 
             @Override
             public void setSpp(int spp) {
+                currentSpp = spp;
             }
 
             @Override
@@ -84,6 +86,7 @@ public class ChunkyWrapper {
     }
 
     public Future<RenderResult> render(Task task) throws InterruptedException {
+        currentSpp = 0;
         currentSps = 0;
         return executor.submit(() -> {
             context.setSppPerPass(1);
@@ -117,7 +120,7 @@ public class ChunkyWrapper {
     }
 
     public int getCurrentSpp() {
-        return renderer.getRenderStatus().getSpp();
+        return currentSpp;
     }
 
     public int getTargetSpp() {

@@ -126,8 +126,8 @@ public class TaskWorker {
                     int spp = chunky.getCurrentSpp();
                     int sps = chunky.getCurrentSps();
                     LOGGER.info("Render task {} for job {}: {} of {} samples per pixel ({} %), {} samples per second",
-                            task.getId(), task.getJob().getId(), spp, chunky.getTargetSpp(),
-                            String.format(Locale.ROOT, "%.2f", (double) spp / chunky.getTargetSpp() * 100), sps);
+                            task.getId(), task.getJob().getId(), spp, task.getSpp(),
+                            String.format(Locale.ROOT, "%.2f", (double) spp / task.getSpp() * 100), sps);
                     RenderServerApiClient.ProgressReportResult result =
                             apiClient.reportTaskProgress(task.getId(), spp, sps);
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {
@@ -142,6 +142,10 @@ public class TaskWorker {
             ChunkyWrapper.RenderResult result;
             try {
                 result = renderFuture.get();
+                rendering.set(false);
+                progressReportScheduler.shutdown();
+                // Finish any in-flight report before sending the final progress and starting upload.
+                progressReportScheduler.awaitTermination(3, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 renderFuture.cancel(true);
                 Thread.currentThread().interrupt();
@@ -149,7 +153,12 @@ public class TaskWorker {
             } catch (ExecutionException e) {
                 throw new RenderException("Rendering failed", e);
             }
-            rendering.set(false);
+
+            try {
+                apiClient.reportTaskProgress(task.getId(), task.getSpp(), 0);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to report final task progress", e);
+            }
 
             LOGGER.info("Uploading...");
             try {
