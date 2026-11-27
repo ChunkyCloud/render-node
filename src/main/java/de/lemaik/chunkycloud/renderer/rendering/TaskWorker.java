@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -123,9 +124,10 @@ public class TaskWorker {
             progressReportScheduler.scheduleAtFixedRate(() -> {
                 try {
                     int spp = chunky.getCurrentSpp();
-                    double sps = chunky.getCurrentSps();
+                    int sps = chunky.getCurrentSps();
                     LOGGER.info("Render task {} for job {}: {} of {} samples per pixel ({} %), {} samples per second",
-                            task.getId(), task.getJob().getId(), spp, chunky.getTargetSpp(), (double) spp / chunky.getTargetSpp() * 100, sps);
+                            task.getId(), task.getJob().getId(), spp, chunky.getTargetSpp(),
+                            String.format(Locale.ROOT, "%.2f", (double) spp / chunky.getTargetSpp() * 100), sps);
                     RenderServerApiClient.ProgressReportResult result =
                             apiClient.reportTaskProgress(task.getId(), spp, sps);
                     if (result == RenderServerApiClient.ProgressReportResult.STOP_RENDERING && rendering.get()) {

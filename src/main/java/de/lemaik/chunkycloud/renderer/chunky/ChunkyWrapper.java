@@ -39,7 +39,7 @@ public class ChunkyWrapper {
     private final SynchronousSceneManager sceneManager;
     private final DefaultRenderManager renderer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private double currentSps = 0;
+    private volatile int currentSps = 0;
 
     public ChunkyWrapper(int threads, int cpuLoad) {
         context = new VoidRenderContext();
@@ -124,7 +124,7 @@ public class ChunkyWrapper {
         return sceneManager.getScene().getTargetSpp();
     }
 
-    public double getCurrentSps() {
+    public int getCurrentSps() {
         return currentSps;
     }
 
